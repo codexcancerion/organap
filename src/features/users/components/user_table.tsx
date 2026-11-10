@@ -11,6 +11,8 @@ import {
   Card,
   Chip,
   Input,
+  ListBox,
+  Select,
   Table,
   TextField,
 } from "@heroui/react";
@@ -127,37 +129,73 @@ export function UserTable({ users, allGroups }: UserTableProps) {
         </div>
 
         {/* Group & Status Selectors */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <div className="flex items-center gap-1.5 text-xs text-muted">
             <Filter size={14} />
-            <span>Group:</span>
+            <span>Filters:</span>
           </div>
-          <select
-            aria-label="Filter by group"
-            className="text-xs bg-surface border border-border/40 rounded-xl px-2.5 py-1.5 text-foreground focus:outline-accent"
-            value={selectedGroup}
-            onChange={(e) => setSelectedGroup(e.target.value)}
-          >
-            <option value="all">All Groups</option>
-            {allGroups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
 
-          <select
-            aria-label="Filter by status"
-            className="text-xs bg-surface border border-border/40 rounded-xl px-2.5 py-1.5 text-foreground focus:outline-accent"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+          <Select
+            aria-label="Filter by group"
+            className="w-44"
+            value={selectedGroup}
+            onChange={(val) => setSelectedGroup(val != null ? String(val) : "all")}
           >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-            <option value="staff">Staff Only</option>
-            <option value="superuser">Superusers Only</option>
-          </select>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="all" textValue="All Groups">
+                  All Groups
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                {allGroups.map((g) => (
+                  <ListBox.Item key={g.id} id={g.id} textValue={g.name}>
+                    {g.name}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+
+          <Select
+            aria-label="Filter by status"
+            className="w-44"
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val != null ? String(val) : "all")}
+          >
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="all" textValue="All Statuses">
+                  All Statuses
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="active" textValue="Active Only">
+                  Active Only
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="inactive" textValue="Inactive Only">
+                  Inactive Only
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="staff" textValue="Staff Only">
+                  Staff Only
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="superuser" textValue="Superusers Only">
+                  Superusers Only
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
       </div>
 
