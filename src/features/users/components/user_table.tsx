@@ -22,6 +22,8 @@ import {
   Filter,
 } from "lucide-react";
 
+import { PageHeader } from "@/components/layout/page_header";
+
 import { UserEditModal } from "./user_edit_modal";
 import { UserGroupModal } from "./user_group_modal";
 
@@ -91,22 +93,16 @@ export function UserTable({ users, allGroups }: UserTableProps) {
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-surface border border-border/40 shadow-xs">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
-              User Directory & Accounts
-            </h1>
-            <Chip color="accent" size="sm" variant="soft">
-              {users.length} Users Registered
-            </Chip>
-          </div>
-          <p className="text-xs text-muted">
-            Inspect verified campus profiles, toggle staff and account status, and assign dynamic groups.
-          </p>
-        </div>
-      </div>
+      {/* Standard Page Header */}
+      <PageHeader
+        badge={
+          <Chip color="accent" size="sm" variant="soft">
+            {users.length} Users Registered
+          </Chip>
+        }
+        description="Inspect verified campus profiles, toggle staff and account status, and assign dynamic groups."
+        title="User Directory & Accounts"
+      />
 
       {/* Filter Toolbar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">

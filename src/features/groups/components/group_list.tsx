@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 
 import { deleteGroup } from "@/features/groups/services/group_services";
 import { isProtectedSystemGroup } from "@/features/groups/types";
+import { PageHeader } from "@/components/layout/page_header";
 
 import { GroupModal } from "./group_modal";
 import { GroupPermissionMatrix } from "./group_permission_matrix";
@@ -104,29 +105,22 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      {/* Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-surface border border-border/40 shadow-xs">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
-              Dynamic Groups & Permissions
-            </h1>
-            <Chip color="accent" size="sm" variant="soft">
-              {groups.length} Groups
-            </Chip>
-          </div>
-          <p className="text-xs text-muted">
-            Configure dynamic institutional roles and granular permission matrices for campus personnel.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
+      {/* Standard Page Header */}
+      <PageHeader
+        actions={
           <Button size="md" variant="primary" onClick={handleOpenCreate}>
             <Plus size={16} />
             Create Group
           </Button>
-        </div>
-      </div>
+        }
+        badge={
+          <Chip color="accent" size="sm" variant="soft">
+            {groups.length} Groups
+          </Chip>
+        }
+        description="Configure dynamic institutional roles and granular permission matrices for campus personnel."
+        title="Dynamic Groups & Permissions"
+      />
 
       {/* Filter / Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

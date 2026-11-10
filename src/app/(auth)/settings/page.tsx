@@ -6,6 +6,7 @@ import { Bell, Shield, Palette } from "lucide-react";
 
 import { getCurrentUser } from "@/features/auth/services/auth_queries";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
+import { PageHeader } from "@/components/layout/page_header";
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -21,14 +22,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-3xl">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Preferences &amp; Settings
-        </h1>
-        <p className="text-muted text-sm">
-          Customize your interface appearance and notification behavior.
-        </p>
-      </div>
+      <PageHeader
+        description="Customize your interface appearance and notification behavior."
+        title="Preferences & Settings"
+      />
 
       <div className="flex flex-col gap-4">
         <Card className="border border-border/40 p-5">

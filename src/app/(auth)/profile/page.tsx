@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/features/auth/services/auth_queries";
 import { ProfileForm } from "@/features/auth/components/profile_form";
+import { PageHeader } from "@/components/layout/page_header";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -19,14 +20,10 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-2xl">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Account Profile
-        </h1>
-        <p className="text-muted text-sm">
-          Update your public display name and student identification details.
-        </p>
-      </div>
+      <PageHeader
+        description="Update your public display name and student identification details."
+        title="Account Profile"
+      />
       <ProfileForm />
     </div>
   );

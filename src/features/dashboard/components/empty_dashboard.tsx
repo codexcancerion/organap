@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
+import { PageHeader } from "@/components/layout/page_header";
+
 export function EmptyDashboard({ user }: { user: AuthUser }) {
   const displayName = user.displayName || user.email.split("@")[0];
 
@@ -93,13 +95,40 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      {/* Welcome Banner (Bare contents snapped to end) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full pt-1 pb-1">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Hello, {displayName}!
-            </h1>
+      {/* Standard Welcome Page Header */}
+      <PageHeader
+        actions={
+          <>
+            {canCreateProposals && (
+              <NextLink href="/proposals/new">
+                <Button size="md" variant="primary">
+                  <FilePlus size={16} />
+                  Draft New Proposal
+                </Button>
+              </NextLink>
+            )}
+
+            {canApproveProposals && (
+              <NextLink href="/proposals">
+                <Button size="md" variant="secondary">
+                  <Clock size={16} />
+                  Review Proposals
+                </Button>
+              </NextLink>
+            )}
+
+            {canRegisterEvents && !canCreateProposals && !canApproveProposals && (
+              <NextLink href="/events">
+                <Button size="md" variant="primary">
+                  <CalendarCheck2 size={16} />
+                  Browse Events
+                </Button>
+              </NextLink>
+            )}
+          </>
+        }
+        badge={
+          <div className="flex items-center gap-1.5 flex-wrap">
             {user.isSuperuser && (
               <Chip className="bg-danger/10 text-danger border border-danger/20 font-semibold" size="sm" variant="soft">
                 <ShieldCheck className="mr-1 inline" size={12} />
@@ -117,40 +146,10 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
               </Chip>
             ))}
           </div>
-          <p className="text-muted text-sm">
-            Welcome to OrGanap. Here is the operational status of your campus event permissions and activities.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0 sm:ml-auto">
-          {canCreateProposals && (
-            <NextLink href="/proposals/new">
-              <Button size="md" variant="primary">
-                <FilePlus size={16} />
-                Draft New Proposal
-              </Button>
-            </NextLink>
-          )}
-
-          {canApproveProposals && (
-            <NextLink href="/proposals">
-              <Button size="md" variant="secondary">
-                <Clock size={16} />
-                Review Proposals
-              </Button>
-            </NextLink>
-          )}
-
-          {canRegisterEvents && !canCreateProposals && !canApproveProposals && (
-            <NextLink href="/events">
-              <Button size="md" variant="primary">
-                <CalendarCheck2 size={16} />
-                Browse Events
-              </Button>
-            </NextLink>
-          )}
-        </div>
-      </div>
+        }
+        description="Welcome to OrGanap. Here is the operational status of your campus event permissions and activities."
+        title={`Hello, ${displayName}!`}
+      />
 
       {/* 3 Redesigned Primary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
