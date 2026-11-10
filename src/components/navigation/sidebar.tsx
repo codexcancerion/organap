@@ -17,7 +17,6 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  User,
   ShieldAlert,
 } from "lucide-react";
 import clsx from "clsx";
@@ -101,50 +100,90 @@ export function Sidebar() {
         isCollapsed ? "w-18" : "w-64",
       )}
     >
-      {/* ── User Header Block ────────────────────────────────── */}
+      {/* ── User Header Block (Profile Action + Sign Out) ────── */}
       <div className="p-3 border-b border-border/30">
-        <NextLink
-          className={clsx(
-            "flex items-center gap-3 p-1.5 rounded-2xl hover:bg-default/15 transition-colors group",
-            isCollapsed && "justify-center px-0",
-          )}
-          href="/profile"
-          title={isCollapsed ? (user?.displayName || user?.email || "Profile") : "View Profile"}
-        >
-          <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
-            {user?.avatarUrl ? (
-              <Avatar.Image
-                alt={user.displayName ?? user.email}
-                className="object-cover"
-                src={user.avatarUrl}
-              />
-            ) : null}
-            <Avatar.Fallback className="bg-primary/10 text-primary">
-              {initialsFor(user?.displayName, user?.email)}
-            </Avatar.Fallback>
-          </Avatar>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                {user?.displayName || user?.email?.split("@")[0] || "User"}
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[11px] text-muted truncate">
-                  {user?.schoolId || user?.email}
-                </span>
-                {isSuperuser ? (
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-danger/10 text-danger border border-danger/20 shrink-0">
-                    Superuser
-                  </span>
-                ) : isStaff ? (
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
-                    Staff
-                  </span>
+        {!isCollapsed ? (
+          <div className="flex items-center justify-between gap-1">
+            <NextLink
+              className="flex items-center gap-3 p-1 rounded-2xl hover:bg-default/15 transition-colors group flex-1 min-w-0"
+              href="/profile"
+              title="View Profile"
+            >
+              <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
+                {user?.avatarUrl ? (
+                  <Avatar.Image
+                    alt={user.displayName ?? user.email}
+                    className="object-cover"
+                    src={user.avatarUrl}
+                  />
                 ) : null}
+                <Avatar.Fallback className="bg-primary/10 text-primary">
+                  {initialsFor(user?.displayName, user?.email)}
+                </Avatar.Fallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                  {user?.displayName || user?.email?.split("@")[0] || "User"}
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[11px] text-muted truncate">
+                    {user?.schoolId || user?.email}
+                  </span>
+                  {isSuperuser ? (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-danger/10 text-danger border border-danger/20 shrink-0">
+                      Superuser
+                    </span>
+                  ) : isStaff ? (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
+                      Staff
+                    </span>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          )}
-        </NextLink>
+            </NextLink>
+
+            <button
+              aria-label="Sign out"
+              className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer shrink-0"
+              title="Sign Out"
+              type="button"
+              onClick={handleSignOut}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <NextLink
+              className="p-1 rounded-2xl hover:bg-default/15 transition-colors flex items-center justify-center"
+              href="/profile"
+              title={user?.displayName || user?.email || "Profile"}
+            >
+              <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
+                {user?.avatarUrl ? (
+                  <Avatar.Image
+                    alt={user.displayName ?? user.email}
+                    className="object-cover"
+                    src={user.avatarUrl}
+                  />
+                ) : null}
+                <Avatar.Fallback className="bg-primary/10 text-primary">
+                  {initialsFor(user?.displayName, user?.email)}
+                </Avatar.Fallback>
+              </Avatar>
+            </NextLink>
+
+            <button
+              aria-label="Sign out"
+              className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer"
+              title="Sign Out"
+              type="button"
+              onClick={handleSignOut}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div
@@ -208,18 +247,7 @@ export function Sidebar() {
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-1 pt-3 border-t border-border/30">
-          <NextLink
-            className={clsx(
-              "flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted hover:text-foreground hover:bg-default/15 transition-colors",
-              isCollapsed && "justify-center px-0",
-            )}
-            href="/profile"
-            title={isCollapsed ? "Profile" : undefined}
-          >
-            <User size={18} />
-            {!isCollapsed ? <span>Profile</span> : null}
-          </NextLink>
+        <div className="pt-2 border-t border-border/30">
           <NextLink
             className={clsx(
               "flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted hover:text-foreground hover:bg-default/15 transition-colors",
@@ -234,50 +262,28 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* ── Footer with Sign Out & Collapse Button ──────────── */}
-      <div className="p-2 sm:p-3 border-t border-border/30 bg-surface/50">
+      {/* ── Footer containing only the Collapser ──────────── */}
+      <div className="p-2 sm:p-3 border-t border-border/30 bg-surface/50 flex items-center justify-end">
         {!isCollapsed ? (
-          <div className="flex items-center justify-between gap-2">
-            <button
-              aria-label="Sign out"
-              className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
-            <button
-              aria-label="Collapse sidebar"
-              className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
-              title="Collapse sidebar"
-              type="button"
-              onClick={handleToggle}
-            >
-              <PanelLeftClose size={17} />
-            </button>
-          </div>
+          <button
+            aria-label="Collapse sidebar"
+            className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+            title="Collapse sidebar"
+            type="button"
+            onClick={handleToggle}
+          >
+            <PanelLeftClose size={17} />
+          </button>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <button
-              aria-label="Sign out"
-              className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer"
-              title="Sign Out"
-              type="button"
-              onClick={handleSignOut}
-            >
-              <LogOut size={17} />
-            </button>
-            <button
-              aria-label="Expand sidebar"
-              className="p-2 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
-              title="Expand sidebar"
-              type="button"
-              onClick={handleToggle}
-            >
-              <PanelLeftOpen size={17} />
-            </button>
-          </div>
+          <button
+            aria-label="Expand sidebar"
+            className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer mx-auto"
+            title="Expand sidebar"
+            type="button"
+            onClick={handleToggle}
+          >
+            <PanelLeftOpen size={17} />
+          </button>
         )}
       </div>
     </aside>
