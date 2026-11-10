@@ -2,6 +2,7 @@
 import type { AuthUser } from "@/types";
 
 import { cache } from "react";
+
 import { createClient } from "@/utils/supabase/server";
 
 /**

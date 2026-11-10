@@ -65,7 +65,7 @@ export function ProfileForm() {
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-muted">{user?.email}</span>
             {user?.isSuperuser ? (
-              <Chip size="sm" variant="soft" className="bg-danger/10 text-danger border border-danger/20">
+              <Chip className="bg-danger/10 text-danger border border-danger/20" size="sm" variant="soft">
                 SUPERUSER
               </Chip>
             ) : user?.groups?.length ? (

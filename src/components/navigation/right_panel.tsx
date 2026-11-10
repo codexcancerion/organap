@@ -8,12 +8,11 @@ import {
   CalendarCheck2,
   FilePlus,
   Clock,
-  Sparkles,
-  ChevronRight,
   ShieldCheck,
   Building2,
+  Users,
 } from "lucide-react";
-import { Button, Card, Chip, Tooltip } from "@heroui/react";
+import { Button, Chip } from "@heroui/react";
 import NextLink from "next/link";
 import clsx from "clsx";
 
@@ -73,18 +72,24 @@ function DefaultRightPanelContent() {
 
   const canCreate = isSuperuser || hasPermission("proposals.create");
   const canApprove = isSuperuser || hasPermission("proposals.approve");
+  const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("users.manage");
+  const canManageGroups = isSuperuser || hasPermission("groups.view") || hasPermission("groups.manage");
 
   return (
-    <div className="flex flex-col gap-4 p-4 overflow-y-auto flex-1 no-scrollbar">
+    <div
+      className="flex flex-col gap-4 p-4 overflow-y-auto flex-1 scrollbar-none no-scrollbar"
+      data-scrollbar="none"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+    >
       {/* Institution Calendar & Term Banner */}
       <div className="p-4 rounded-2xl bg-surface border border-border/40 shadow-xs flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Academic Term</span>
-          <Chip size="sm" variant="soft" className="text-[10px]">Active</Chip>
+          <Chip className="text-[10px]" size="sm" variant="soft">Active</Chip>
         </div>
         <p className="text-sm font-semibold text-foreground">AY 2026–2027 • 1st Semester</p>
         <span className="text-xs text-muted flex items-center gap-1.5">
-          <Clock size={13} className="text-accent" />
+          <Clock className="text-accent" size={13} />
           Proposals require ≥ 7 days advance lead
         </span>
       </div>
@@ -124,6 +129,24 @@ function DefaultRightPanelContent() {
             Recognized Organizations
           </Button>
         </NextLink>
+
+        {canManageUsers && (
+          <NextLink href="/admin/users">
+            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
+              <Users size={15} />
+              User Directory
+            </Button>
+          </NextLink>
+        )}
+
+        {canManageGroups && (
+          <NextLink href="/admin/groups">
+            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
+              <ShieldCheck size={15} />
+              Groups & Permissions
+            </Button>
+          </NextLink>
+        )}
       </div>
 
       {/* Permissions / Group Status */}
@@ -131,18 +154,18 @@ function DefaultRightPanelContent() {
         <span className="text-[11px] font-bold uppercase tracking-wider text-muted px-1">Active Privileges</span>
         <div className="flex flex-wrap gap-1.5">
           {user?.isSuperuser && (
-            <Chip size="sm" variant="soft" className="bg-danger/10 text-danger border border-danger/20 text-[10px]">
-              <ShieldCheck size={11} className="mr-1 inline" />
+            <Chip className="bg-danger/10 text-danger border border-danger/20 text-[10px]" size="sm" variant="soft">
+              <ShieldCheck className="mr-1 inline" size={11} />
               Superuser
             </Chip>
           )}
           {user?.groups?.map((g) => (
-            <Chip key={g} size="sm" variant="soft" className="text-[10px]">
+            <Chip key={g} className="text-[10px]" size="sm" variant="soft">
               {g}
             </Chip>
           ))}
           {!user?.isSuperuser && !user?.groups?.length && (
-            <Chip size="sm" variant="soft" className="text-[10px]">
+            <Chip className="text-[10px]" size="sm" variant="soft">
               Standard Attendee
             </Chip>
           )}
@@ -203,8 +226,10 @@ export function RightPanel() {
       const rawWidth = startWidth + deltaX;
 
       let snappedWidth = rawWidth;
+
       for (const presetKey of Object.keys(PANEL_WIDTHS) as PanelWidthPreset[]) {
         const targetW = PANEL_WIDTHS[presetKey];
+
         if (Math.abs(rawWidth - targetW) <= SNAP_THRESHOLD) {
           snappedWidth = targetW;
           break;
@@ -212,6 +237,7 @@ export function RightPanel() {
       }
 
       const clamped = Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, snappedWidth));
+
       latestClampedWidth = clamped;
       setWidth(clamped);
     };
@@ -230,6 +256,7 @@ export function RightPanel() {
 
       if (finalRawWidth < COLLAPSE_THRESHOLD) {
         setIsCollapsed(true);
+
         return;
       }
 
@@ -258,7 +285,7 @@ export function RightPanel() {
       <aside
         aria-label="Right panel (collapsed)"
         className={clsx(
-          "hidden xl:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-6rem)] w-12 bg-surface border border-border/40 rounded-3xl overflow-hidden relative shadow-xs transition-all duration-200",
+          "hidden md:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-6rem)] w-12 bg-surface border border-border/40 rounded-3xl overflow-hidden relative shadow-xs transition-all duration-200",
         )}
       >
         <div className="flex flex-col items-center py-4 gap-4 h-full">
@@ -284,7 +311,7 @@ export function RightPanel() {
     <aside
       aria-label="Right panel"
       className={clsx(
-        "hidden xl:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-6rem)] bg-surface border border-border/40 rounded-3xl overflow-hidden relative shadow-xs",
+        "hidden md:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-6rem)] bg-surface border border-border/40 rounded-3xl overflow-hidden relative shadow-xs",
         !isDragging && "transition-[width] duration-200 ease-out",
       )}
       style={{ width }}
@@ -303,7 +330,7 @@ export function RightPanel() {
           <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Campus Hub
           </span>
-          <Chip size="sm" variant="soft" className="text-[10px]">
+          <Chip className="text-[10px]" size="sm" variant="soft">
             {preset}
           </Chip>
         </div>

@@ -41,13 +41,13 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
               Hello, {displayName}!
             </h1>
             {user.isSuperuser && (
-              <Chip size="sm" variant="soft" className="bg-danger/10 text-danger border border-danger/20">
-                <ShieldCheck size={12} className="mr-1 inline" />
+              <Chip className="bg-danger/10 text-danger border border-danger/20" size="sm" variant="soft">
+                <ShieldCheck className="mr-1 inline" size={12} />
                 SUPERUSER
               </Chip>
             )}
             {user.isStaff && !user.isSuperuser && (
-              <Chip size="sm" variant="soft" className="bg-primary/10 text-primary border border-primary/20">
+              <Chip className="bg-primary/10 text-primary border border-primary/20" size="sm" variant="soft">
                 STAFF
               </Chip>
             )}
@@ -182,7 +182,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
               <p className="text-xs font-semibold text-muted uppercase">Active Events</p>
               <p className="text-2xl font-bold text-foreground mt-1">0</p>
             </div>
-            <div className="p-3 rounded-2xl bg-success/10 text-success">
+            <div className="p-3 rounded-2xl bg-primary/10 text-primary">
               <CheckCircle2 size={20} />
             </div>
           </Card.Content>

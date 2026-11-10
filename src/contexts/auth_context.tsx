@@ -168,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (perm: string): boolean => {
       if (!user) return false;
       if (user.isSuperuser) return true;
+
       return user.permissions.includes(perm);
     },
     [user],
@@ -177,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (...perms: string[]): boolean => {
       if (!user) return false;
       if (user.isSuperuser) return true;
+
       return perms.some((p) => user.permissions.includes(p));
     },
     [user],
@@ -186,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (...perms: string[]): boolean => {
       if (!user) return false;
       if (user.isSuperuser) return true;
+
       return perms.every((p) => user.permissions.includes(p));
     },
     [user],
@@ -194,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const inGroup = React.useCallback(
     (groupName: string): boolean => {
       if (!user) return false;
+
       return user.groups.includes(groupName);
     },
     [user],

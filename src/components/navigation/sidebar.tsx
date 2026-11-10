@@ -72,7 +72,8 @@ export function Sidebar() {
 
   const canManageVenues = isSuperuser || hasPermission("venues.view");
   const canViewReports = isSuperuser || hasPermission("reports.view");
-  const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("groups.view");
+  const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("users.manage");
+  const canManageGroups = isSuperuser || hasPermission("groups.view") || hasPermission("groups.manage");
 
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard, match: "/dashboard" },
@@ -83,14 +84,17 @@ export function Sidebar() {
   ];
 
   const adminItems = [
+    ...(canManageUsers
+      ? [{ label: "User Directory", href: "/admin/users", icon: Users, match: "/admin/users" }]
+      : []),
+    ...(canManageGroups
+      ? [{ label: "Groups & Perms", href: "/admin/groups", icon: ShieldAlert, match: "/admin/groups" }]
+      : []),
     ...(canManageVenues
       ? [{ label: "Venues", href: "/admin/venues", icon: Building2, match: "/admin/venues" }]
       : []),
     ...(canViewReports
       ? [{ label: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" }]
-      : []),
-    ...(canManageUsers
-      ? [{ label: "Users & Groups", href: "/admin/users", icon: ShieldAlert, match: "/admin/users" }]
       : []),
   ];
 
@@ -122,7 +126,11 @@ export function Sidebar() {
         </button>
       </div>
 
-      <div className="flex flex-col justify-between flex-1 p-3 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        className="flex flex-col justify-between flex-1 p-3 overflow-y-auto scrollbar-none no-scrollbar"
+        data-scrollbar="none"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         <div className="flex flex-col gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.match || pathname.startsWith(item.match + "/");
