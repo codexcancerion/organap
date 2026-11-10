@@ -94,7 +94,7 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className={clsx("flex h-16 items-center justify-between px-4 sm:px-6", user ? "w-full" : "container mx-auto max-w-7xl")}>
         <div className="flex items-center gap-8">
           <Logo />
           <nav className="hidden md:flex items-center gap-1">

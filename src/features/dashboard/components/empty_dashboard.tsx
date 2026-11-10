@@ -74,7 +74,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
 
           {canApproveProposals && (
             <NextLink href="/proposals">
-              <Button size="md" variant="primary">
+              <Button size="md" variant="secondary">
                 <Clock size={16} />
                 Review Proposals
               </Button>
@@ -101,7 +101,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
                 <p className="text-xs font-semibold text-muted uppercase">Pending Approvals</p>
                 <p className="text-2xl font-bold text-foreground mt-1">0</p>
               </div>
-              <div className="p-3 rounded-2xl bg-warning/10 text-warning">
+              <div className="p-3 rounded-2xl bg-danger/10 text-danger">
                 <Inbox size={20} />
               </div>
             </Card.Content>

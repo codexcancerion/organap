@@ -122,7 +122,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      <div className="flex flex-col justify-between flex-1 p-3 overflow-y-auto">
+      <div className="flex flex-col justify-between flex-1 p-3 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex flex-col gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.match || pathname.startsWith(item.match + "/");
