@@ -20,7 +20,7 @@ import {
   Users,
   KeyRound,
   Trash2,
-  Edit2,
+  Settings,
   Search,
   Lock,
 } from "lucide-react";
@@ -155,52 +155,28 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
 
           return (
             <Card key={group.id} className="border border-border/30 hover:border-border/60 transition-colors bg-surface">
-              <Card.Header className="flex items-start justify-between gap-3 pb-2">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-2xl bg-accent/10 text-accent shrink-0">
-                    <Shield size={20} />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-base text-foreground truncate">
-                        {group.name}
-                      </span>
-                      {isSystem && (
-                        <Chip className="text-[10px]" color="default" size="sm" variant="soft">
-                          <Lock className="mr-1 inline" size={10} />
-                          System Group
-                        </Chip>
-                      )}
-                    </div>
-                    {group.description ? (
-                      <p className="text-xs text-muted mt-1 line-clamp-2">
-                        {group.description}
-                      </p>
-                    ) : (
-                      <span className="text-xs text-muted italic mt-1">No description provided</span>
+              <Card.Header className="flex items-start gap-3 pb-2">
+                <div className="p-2.5 rounded-2xl bg-accent/10 text-accent shrink-0">
+                  <Shield size={20} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-base text-foreground truncate">
+                      {group.name}
+                    </span>
+                    {isSystem && (
+                      <Chip className="text-[10px]" color="default" size="sm" variant="soft">
+                        <Lock className="mr-1 inline" size={10} />
+                        System Group
+                      </Chip>
                     )}
                   </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    aria-label={`Edit ${group.name}`}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleOpenEdit(group)}
-                  >
-                    <Edit2 size={14} />
-                  </Button>
-                  {!isSystem && (
-                    <Button
-                      aria-label={`Delete ${group.name}`}
-                      className="text-danger hover:bg-danger/10"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteGroup(group)}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
+                  {group.description ? (
+                    <p className="text-xs text-muted mt-1 line-clamp-2">
+                      {group.description}
+                    </p>
+                  ) : (
+                    <span className="text-xs text-muted italic mt-1">No description provided</span>
                   )}
                 </div>
               </Card.Header>
@@ -219,9 +195,28 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
               </Card.Content>
 
               <Card.Footer className="border-t border-border/20 pt-3 flex items-center justify-between">
-                <span className="text-[11px] text-muted font-mono">
-                  Updated {new Date(group.updatedAt).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    aria-label={`Edit ${group.name}`}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleOpenEdit(group)}
+                  >
+                    <Settings size={15} />
+                  </Button>
+                  {!isSystem && (
+                    <Button
+                      aria-label={`Delete ${group.name}`}
+                      className="text-danger hover:bg-danger/10"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteGroup(group)}
+                    >
+                      <Trash2 size={15} />
+                    </Button>
+                  )}
+                </div>
+
                 <Button
                   size="sm"
                   variant="secondary"
