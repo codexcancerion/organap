@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "organap": {
+      "serverUrl": "http://localhost:3000/api/mcp"
+    }
+  }
+}

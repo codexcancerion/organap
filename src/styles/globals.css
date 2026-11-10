@@ -1,0 +1,120 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --animate-fade-in: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * OrGanap stylesheet policy
+ *
+ * 1. Tailwind first: Utility classes in markup or `tailwind-variants`
+ *    recipes colocated with components.
+ * 2. HeroUI v3 components are pre-styled. Use compound components and
+ *    props/variants/slots rather than overriding raw CSS.
+ * 3. Custom CSS in this file is strictly for theme tokens, resets, and
+ *    third-party imports.
+ * ────────────────────────────────────────────────────────────────── */
+
+:root,
+.light,
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+  /* Brand Accent: Energetic Emerald / Forest Green & Modern Slate */
+  --accent: oklch(58.5% 0.18 155.0);
+  --accent-foreground: oklch(99% 0 0);
+  --background: oklch(98% 0.005 155.0);
+  --border: oklch(90% 0.005 155.0);
+  --danger: oklch(63% 0.22 28.0);
+  --danger-foreground: oklch(99% 0 0);
+  --default: oklch(94% 0.005 155.0);
+  --default-foreground: oklch(20% 0.01 155.0);
+  --field-background: oklch(100% 0 0);
+  --field-border: transparent;
+  --field-foreground: oklch(20% 0.01 155.0);
+  --field-placeholder: oklch(55% 0.01 155.0);
+  --focus: oklch(58.5% 0.18 155.0);
+  --foreground: oklch(18% 0.01 155.0);
+  --muted: oklch(52% 0.01 155.0);
+  --overlay: oklch(100% 0 0);
+  --overlay-foreground: oklch(18% 0.01 155.0);
+  --scrollbar: oklch(85% 0.01 155.0);
+  --segment: oklch(100% 0 0);
+  --segment-foreground: oklch(18% 0.01 155.0);
+  --separator: oklch(91% 0.005 155.0);
+  --success: oklch(68% 0.19 148.0);
+  --success-foreground: oklch(99% 0 0);
+  --surface: oklch(100% 0 0);
+  --surface-foreground: oklch(18% 0.01 155.0);
+  --surface-secondary: oklch(96% 0.005 155.0);
+  --surface-secondary-foreground: oklch(18% 0.01 155.0);
+  --surface-tertiary: oklch(94% 0.005 155.0);
+  --surface-tertiary-foreground: oklch(18% 0.01 155.0);
+  --warning: oklch(76% 0.16 75.0);
+  --warning-foreground: oklch(20% 0.01 75.0);
+  --skeleton-animation: shimmer;
+}
+
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --accent: oklch(68% 0.19 155.0);
+  --accent-foreground: oklch(12% 0.02 155.0);
+  --background: oklch(14% 0.01 155.0);
+  --border: oklch(26% 0.01 155.0);
+  --danger: oklch(62% 0.20 28.0);
+  --danger-foreground: oklch(99% 0 0);
+  --default: oklch(24% 0.01 155.0);
+  --default-foreground: oklch(98% 0 0);
+  --field-background: oklch(20% 0.01 155.0);
+  --field-border: transparent;
+  --field-foreground: oklch(98% 0 0);
+  --field-placeholder: oklch(65% 0.01 155.0);
+  --focus: oklch(68% 0.19 155.0);
+  --foreground: oklch(96% 0.005 155.0);
+  --muted: oklch(68% 0.01 155.0);
+  --overlay: oklch(18% 0.01 155.0);
+  --overlay-foreground: oklch(96% 0.005 155.0);
+  --scrollbar: oklch(40% 0.01 155.0);
+  --segment: oklch(26% 0.01 155.0);
+  --segment-foreground: oklch(96% 0.005 155.0);
+  --separator: oklch(24% 0.01 155.0);
+  --success: oklch(70% 0.18 148.0);
+  --success-foreground: oklch(12% 0.02 148.0);
+  --surface: oklch(18% 0.01 155.0);
+  --surface-foreground: oklch(96% 0.005 155.0);
+  --surface-secondary: oklch(22% 0.01 155.0);
+  --surface-secondary-foreground: oklch(96% 0.005 155.0);
+  --surface-tertiary: oklch(25% 0.01 155.0);
+  --surface-tertiary-foreground: oklch(96% 0.005 155.0);
+  --warning: oklch(78% 0.15 75.0);
+  --warning-foreground: oklch(15% 0.02 75.0);
+  --skeleton-animation: pulse;
+}
