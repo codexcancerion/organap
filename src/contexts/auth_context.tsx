@@ -1,5 +1,5 @@
 // AuthContext — wraps the app in a single source of truth for the
-// currently signed-in user across all OrGanap features.
+// currently signed-in user with Django-style dynamic groups and permissions.
 "use client";
 
 import type {
@@ -36,11 +36,13 @@ type AuthContextValue = {
   updateProfile: (input: UpdateProfileInput) => Promise<AuthError | null>;
   requestPasswordReset: (input: ResetPasswordInput) => Promise<AuthError | null>;
   updatePassword: (password: string) => Promise<AuthError | null>;
-  isSuperadmin: boolean;
-  isStudentAffairs: boolean;
-  isAdviser: boolean;
-  isOfficer: boolean;
-  isStudent: boolean;
+  // Django-style permissions & group checks
+  isSuperuser: boolean;
+  isStaff: boolean;
+  hasPermission: (permissionCode: string) => boolean;
+  hasAnyPermission: (...permissionCodes: string[]) => boolean;
+  hasAllPermissions: (...permissionCodes: string[]) => boolean;
+  inGroup: (groupName: string) => boolean;
 };
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -158,11 +160,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return svcUpdateUserPassword(password);
   }, []);
 
-  const isSuperadmin = user?.role === "superadmin";
-  const isStudentAffairs = user?.role === "student_affairs" || isSuperadmin;
-  const isAdviser = user?.role === "adviser";
-  const isOfficer = user?.role === "officer";
-  const isStudent = user?.role === "student";
+  // Django-style permissions evaluation
+  const isSuperuser = Boolean(user?.isSuperuser);
+  const isStaff = Boolean(user?.isStaff || user?.isSuperuser);
+
+  const hasPermission = React.useCallback(
+    (perm: string): boolean => {
+      if (!user) return false;
+      if (user.isSuperuser) return true;
+      return user.permissions.includes(perm);
+    },
+    [user],
+  );
+
+  const hasAnyPermission = React.useCallback(
+    (...perms: string[]): boolean => {
+      if (!user) return false;
+      if (user.isSuperuser) return true;
+      return perms.some((p) => user.permissions.includes(p));
+    },
+    [user],
+  );
+
+  const hasAllPermissions = React.useCallback(
+    (...perms: string[]): boolean => {
+      if (!user) return false;
+      if (user.isSuperuser) return true;
+      return perms.every((p) => user.permissions.includes(p));
+    },
+    [user],
+  );
+
+  const inGroup = React.useCallback(
+    (groupName: string): boolean => {
+      if (!user) return false;
+      return user.groups.includes(groupName);
+    },
+    [user],
+  );
 
   const value = React.useMemo(
     () => ({
@@ -174,11 +209,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateProfile,
       requestPasswordReset,
       updatePassword,
-      isSuperadmin,
-      isStudentAffairs,
-      isAdviser,
-      isOfficer,
-      isStudent,
+      isSuperuser,
+      isStaff,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
+      inGroup,
     }),
     [
       user,
@@ -189,11 +225,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateProfile,
       requestPasswordReset,
       updatePassword,
-      isSuperadmin,
-      isStudentAffairs,
-      isAdviser,
-      isOfficer,
-      isStudent,
+      isSuperuser,
+      isStaff,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
+      inGroup,
     ],
   );
 

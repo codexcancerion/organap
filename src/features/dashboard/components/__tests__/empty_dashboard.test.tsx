@@ -10,16 +10,20 @@ describe("<EmptyDashboard />", () => {
     const studentUser: AuthUser = {
       id: "student-1",
       email: "student@school.edu",
-      role: "student",
       displayName: "Juan Dela Cruz",
       schoolId: "2026-0001",
       avatarUrl: null,
+      isSuperuser: false,
+      isStaff: false,
+      isActive: true,
+      groups: ["Students"],
+      permissions: ["events.view", "events.register"],
     };
 
     render(<EmptyDashboard user={studentUser} />);
 
     expect(screen.getByText("Hello, Juan Dela Cruz!")).toBeInTheDocument();
-    expect(screen.getByText("STUDENT")).toBeInTheDocument();
+    expect(screen.getByText("Students")).toBeInTheDocument();
     expect(screen.getByText("My Registrations")).toBeInTheDocument();
     expect(screen.getByText("Browse Events")).toBeInTheDocument();
   });
@@ -28,17 +32,21 @@ describe("<EmptyDashboard />", () => {
     const officerUser: AuthUser = {
       id: "officer-1",
       email: "officer@school.edu",
-      role: "officer",
       displayName: "Maria Santos",
       schoolId: "2026-0002",
       avatarUrl: null,
+      isSuperuser: false,
+      isStaff: false,
+      isActive: true,
+      groups: ["Student Organization Officers"],
+      permissions: ["proposals.view", "proposals.create", "proposals.change"],
     };
 
     render(<EmptyDashboard user={officerUser} />);
 
     expect(screen.getByText("Hello, Maria Santos!")).toBeInTheDocument();
-    expect(screen.getByText("OFFICER")).toBeInTheDocument();
-    expect(screen.getByText("Draft Proposals")).toBeInTheDocument();
+    expect(screen.getByText("Student Organization Officers")).toBeInTheDocument();
+    expect(screen.getByText("My Draft Proposals")).toBeInTheDocument();
     expect(screen.getByText("Draft New Proposal")).toBeInTheDocument();
   });
 });

@@ -68,11 +68,17 @@ export default async function SettingsPage() {
                 <Shield size={20} />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Account Role</h2>
-                <p className="text-xs text-muted">Verified school credentials (FR-01, FR-02)</p>
+                <h2 className="text-sm font-semibold text-foreground">Account Access & Groups</h2>
+                <p className="text-xs text-muted">Governed by dynamic campus groups and permissions</p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-muted uppercase">{user.role}</span>
+            <span className="text-xs font-semibold text-muted uppercase">
+              {user.isSuperuser
+                ? "Superuser"
+                : user.groups.length
+                  ? user.groups.join(", ")
+                  : "Standard Member"}
+            </span>
           </Card.Content>
         </Card>
       </div>

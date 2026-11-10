@@ -1,15 +1,30 @@
-// Domain model types for OrGanap
+// Domain model types for OrGanap — Django-style dynamic RBAC & event workflows
 
-export type AppRole = "superadmin" | "student_affairs" | "adviser" | "officer" | "student";
-export type UserRole = AppRole;
+export type Permission = {
+  id: string;
+  code: string;
+  name: string;
+  module: string;
+  description: string | null;
+};
+
+export type UserGroup = {
+  id: string;
+  name: string;
+  description: string | null;
+};
 
 export type AuthUser = {
   id: string;
   email: string;
-  role: AppRole;
   displayName: string | null;
   schoolId: string | null;
   avatarUrl: string | null;
+  isSuperuser: boolean;
+  isStaff: boolean;
+  isActive: boolean;
+  groups: string[];
+  permissions: string[];
 };
 
 export type ProposalStatus =
@@ -44,6 +59,16 @@ export type Organization = {
   category: string;
   logoUrl: string | null;
   isActive: boolean;
+  createdAt: string;
+};
+
+export type OrganizationMember = {
+  id: string;
+  organizationId: string;
+  userId: string;
+  positionTitle: string | null;
+  isOfficer: boolean;
+  isAdviser: boolean;
   createdAt: string;
 };
 
@@ -105,10 +130,11 @@ export type AttendanceRecord = {
 
 export type UserProfile = {
   id: string;
-  role: UserRole;
   schoolId: string | null;
   displayName: string;
   avatarUrl: string | null;
+  isSuperuser: boolean;
+  isStaff: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

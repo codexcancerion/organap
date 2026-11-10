@@ -1,8 +1,6 @@
 "use client";
 
-// Student / Officer / Adviser Registration form for OrGanap.
-import type { AppRole } from "@/features/auth/types";
-
+// Dynamic user registration form for OrGanap (Django-style RBAC).
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -11,8 +9,6 @@ import {
   Form,
   Input,
   Label,
-  Radio,
-  RadioGroup,
   Spinner,
   TextField,
   toast,
@@ -27,7 +23,6 @@ export function RegisterForm() {
 
   const [pending, setPending] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
-  const [selectedRole, setSelectedRole] = React.useState<AppRole>("student");
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,7 +39,6 @@ export function RegisterForm() {
       password,
       displayName,
       schoolId: schoolId || undefined,
-      role: selectedRole,
     });
 
     setPending(false);
@@ -143,24 +137,6 @@ export function RegisterForm() {
         />
         <FieldError />
       </TextField>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-foreground">
-          Primary Institutional Role
-        </label>
-        <RadioGroup
-          className="flex flex-row gap-4 pt-1"
-          value={selectedRole}
-          onChange={(val) => setSelectedRole(val as AppRole)}
-        >
-          <Radio value="student">Student Attendee</Radio>
-          <Radio value="officer">Org Officer</Radio>
-          <Radio value="adviser">Faculty Adviser</Radio>
-        </RadioGroup>
-        <span className="text-xs text-muted">
-          Designated Student Affairs personnel verify officer and adviser assignments (FR-02).
-        </span>
-      </div>
 
       <TextField
         isRequired

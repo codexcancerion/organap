@@ -1,5 +1,6 @@
 "use client";
 
+// Dynamic navigation sidebar for OrGanap (Django-style RBAC).
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
@@ -17,6 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   User,
+  ShieldAlert,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -39,7 +41,7 @@ function initialsFor(name: string | null | undefined, email: string | null | und
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut, isStudentAffairs } = useAuth();
+  const { user, signOut, isStaff, isSuperuser, hasPermission } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -64,7 +66,13 @@ export function Sidebar() {
     router.refresh();
   };
 
-  const roleLabel = (user?.role || "student").replace("_", " ");
+  const primaryBadge = isSuperuser
+    ? "Superuser"
+    : user?.groups?.[0] || (isStaff ? "Staff" : "Member");
+
+  const canManageVenues = isSuperuser || hasPermission("venues.view");
+  const canViewReports = isSuperuser || hasPermission("reports.view");
+  const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("groups.view");
 
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard, match: "/dashboard" },
@@ -75,8 +83,15 @@ export function Sidebar() {
   ];
 
   const adminItems = [
-    { label: "Venues", href: "/admin/venues", icon: Building2, match: "/admin/venues" },
-    { label: "Institutional Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" },
+    ...(canManageVenues
+      ? [{ label: "Venues", href: "/admin/venues", icon: Building2, match: "/admin/venues" }]
+      : []),
+    ...(canViewReports
+      ? [{ label: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" }]
+      : []),
+    ...(canManageUsers
+      ? [{ label: "Users & Groups", href: "/admin/users", icon: ShieldAlert, match: "/admin/users" }]
+      : []),
   ];
 
   return (
@@ -93,7 +108,7 @@ export function Sidebar() {
               Navigation
             </span>
             <Chip size="sm" variant="soft">
-              {roleLabel}
+              {primaryBadge}
             </Chip>
           </div>
         ) : null}
@@ -131,12 +146,12 @@ export function Sidebar() {
             );
           })}
 
-          {isStudentAffairs ? (
+          {adminItems.length > 0 ? (
             <>
               <div className="my-2 border-t border-border/30" />
               {!isCollapsed ? (
                 <span className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Student Affairs
+                  Administration
                 </span>
               ) : null}
               {adminItems.map((item) => {

@@ -1,6 +1,5 @@
-// Browser-side Supabase auth calls for OrGanap.
+// Browser-side Supabase auth calls for OrGanap (Django-style RBAC).
 import type {
-  AppRole,
   AuthError,
   AuthResult,
   AuthUser,
@@ -20,7 +19,7 @@ function toAuthError(err: { message: string; code?: string } | null): AuthError 
 }
 
 /**
- * Hydrate a full `AuthUser` from a Supabase `User`.
+ * Hydrate a full `AuthUser` with Django-style groups and permissions.
  */
 export async function hydrateAuthUser(
   baseUser: { id: string; email?: string | null } | null | undefined,
@@ -31,7 +30,7 @@ export async function hydrateAuthUser(
     const supabase = createClient();
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("id, role, display_name, school_id, avatar_url")
+      .select("id, display_name, school_id, avatar_url, is_superuser, is_staff, is_active")
       .eq("id", baseUser.id)
       .maybeSingle();
 
@@ -39,15 +38,40 @@ export async function hydrateAuthUser(
       console.error("Failed to fetch profile row:", error.message);
     }
 
-    const role: AppRole = (profile?.role as AppRole | undefined) ?? "student";
+    // Fetch user groups
+    const { data: userGroups } = await supabase
+      .from("user_groups")
+      .select("groups(name)")
+      .eq("user_id", baseUser.id);
+
+    const groups: string[] = (userGroups ?? [])
+      .map((g) => (g.groups as { name: string } | null)?.name)
+      .filter((name): name is string => typeof name === "string");
+
+    // Fetch effective permissions
+    const { data: permsData, error: permsError } = await supabase.rpc("get_user_permissions", {
+      p_user_id: baseUser.id,
+    });
+
+    if (permsError) {
+      console.error("Failed to fetch user permissions:", permsError.message);
+    }
+
+    const permissions: string[] = (permsData ?? [])
+      .map((p) => p.permission_code)
+      .filter((code): code is string => typeof code === "string");
 
     return {
       id: baseUser.id,
       email: baseUser.email ?? "",
-      role,
       displayName: profile?.display_name ? profile.display_name.trim() || null : null,
       schoolId: profile?.school_id ?? null,
       avatarUrl: profile?.avatar_url ?? null,
+      isSuperuser: profile?.is_superuser ?? false,
+      isStaff: profile?.is_staff ?? false,
+      isActive: profile?.is_active ?? true,
+      groups,
+      permissions,
     };
   } catch (err) {
     console.error("Error during profile hydration:", err);
@@ -55,10 +79,14 @@ export async function hydrateAuthUser(
     return {
       id: baseUser.id,
       email: baseUser.email ?? "",
-      role: "student",
       displayName: null,
       schoolId: null,
       avatarUrl: null,
+      isSuperuser: false,
+      isStaff: false,
+      isActive: true,
+      groups: [],
+      permissions: [],
     };
   }
 }
@@ -89,7 +117,7 @@ export async function signInWithPassword(
   return { data: user, error: null };
 }
 
-/** Sign up a new user with metadata (displayName, schoolId, role). */
+/** Sign up a new campus user with profile metadata. */
 export async function signUpWithPassword(
   input: SignUpInput,
 ): Promise<SignUpResult> {
@@ -101,7 +129,6 @@ export async function signUpWithPassword(
       data: {
         display_name: input.displayName,
         school_id: input.schoolId ?? null,
-        role: input.role ?? "student",
       },
     },
   });

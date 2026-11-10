@@ -142,7 +142,9 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
                     {user.displayName || user.email.split("@")[0]}
                   </span>
                   <span className="text-[10px] text-muted capitalize">
-                    {user.role.replace("_", " ")}
+                    {user.isSuperuser
+                      ? "Superuser"
+                      : user.groups?.[0] || (user.isStaff ? "Staff" : "Member")}
                   </span>
                 </div>
               </NextLink>
@@ -221,7 +223,9 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
                         {user.email}
                       </span>
                       <Chip className="mt-1" size="sm" variant="soft">
-                        {user.role.toUpperCase()}
+                        {user.isSuperuser
+                          ? "SUPERUSER"
+                          : (user.groups?.[0] || (user.isStaff ? "STAFF" : "MEMBER")).toUpperCase()}
                       </Chip>
                     </div>
                   </div>

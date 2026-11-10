@@ -1,7 +1,7 @@
 // Auth feature types. Co-located per AGENTS.md.
-import type { AppRole, AuthUser } from "@/types";
+import type { AuthUser, Permission, UserGroup } from "@/types";
 
-export type { AppRole, AuthUser };
+export type { AuthUser, Permission, UserGroup };
 
 export type AuthError = {
   message: string;
@@ -18,7 +18,6 @@ export type SignUpInput = {
   password: string;
   displayName: string;
   schoolId?: string;
-  role?: AppRole;
 };
 
 export type UpdateProfileInput = {

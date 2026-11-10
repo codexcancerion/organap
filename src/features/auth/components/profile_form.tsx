@@ -64,9 +64,21 @@ export function ProfileForm() {
           </h2>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-muted">{user?.email}</span>
-            <Chip size="sm" variant="soft">
-              {user?.role?.toUpperCase()}
-            </Chip>
+            {user?.isSuperuser ? (
+              <Chip size="sm" variant="soft" className="bg-danger/10 text-danger border border-danger/20">
+                SUPERUSER
+              </Chip>
+            ) : user?.groups?.length ? (
+              user.groups.map((group) => (
+                <Chip key={group} size="sm" variant="soft">
+                  {group}
+                </Chip>
+              ))
+            ) : (
+              <Chip size="sm" variant="soft">
+                MEMBER
+              </Chip>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -34,11 +34,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      group_permissions: {
+        Row: {
+          created_at: string
+          group_id: string
+          permission_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          permission_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_permissions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
           id: string
-          org_role: string
+          is_adviser: boolean
+          is_officer: boolean
           organization_id: string
           position_title: string | null
           user_id: string
@@ -46,7 +104,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          org_role?: string
+          is_adviser?: boolean
+          is_officer?: boolean
           organization_id: string
           position_title?: string | null
           user_id: string
@@ -54,7 +113,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          org_role?: string
+          is_adviser?: boolean
+          is_officer?: boolean
           organization_id?: string
           position_title?: string | null
           user_id?: string
@@ -115,6 +175,33 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          module: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          module: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          module?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -122,7 +209,8 @@ export type Database = {
           display_name: string
           id: string
           is_active: boolean
-          role: Database["public"]["Enums"]["user_role"]
+          is_staff: boolean
+          is_superuser: boolean
           school_id: string | null
           updated_at: string
         }
@@ -132,7 +220,8 @@ export type Database = {
           display_name?: string
           id: string
           is_active?: boolean
-          role?: Database["public"]["Enums"]["user_role"]
+          is_staff?: boolean
+          is_superuser?: boolean
           school_id?: string | null
           updated_at?: string
         }
@@ -142,7 +231,8 @@ export type Database = {
           display_name?: string
           id?: string
           is_active?: boolean
-          role?: Database["public"]["Enums"]["user_role"]
+          is_staff?: boolean
+          is_superuser?: boolean
           school_id?: string | null
           updated_at?: string
         }
@@ -174,6 +264,72 @@ export type Database = {
           {
             foreignKeyName: "system_settings_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string
+          group_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          created_at: string
+          permission_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_permissions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -212,14 +368,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_auth_role: {
-        Args: never
-        Returns: Database["public"]["Enums"]["user_role"]
+      get_user_groups: {
+        Args: { p_user_id?: string }
+        Returns: {
+          group_id: string
+          group_name: string
+        }[]
       }
-      is_admin: { Args: never; Returns: boolean }
-      is_org_adviser: { Args: { p_org_id: string }; Returns: boolean }
-      is_org_officer: { Args: { p_org_id: string }; Returns: boolean }
-      is_superadmin: { Args: never; Returns: boolean }
+      get_user_permissions: {
+        Args: { p_user_id?: string }
+        Returns: {
+          permission_code: string
+        }[]
+      }
+      has_any_perm: {
+        Args: { p_codes: string[]; p_user_id?: string }
+        Returns: boolean
+      }
+      has_perm: {
+        Args: { p_code: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_org_adviser: {
+        Args: { p_org_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_org_officer: {
+        Args: { p_org_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_staff: { Args: { p_user_id?: string }; Returns: boolean }
+      is_superuser: { Args: { p_user_id?: string }; Returns: boolean }
     }
     Enums: {
       proposal_status:
@@ -232,12 +411,6 @@ export type Database = {
         | "rejected_by_student_affairs"
         | "approved"
         | "cancelled"
-      user_role:
-        | "superadmin"
-        | "student_affairs"
-        | "adviser"
-        | "officer"
-        | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -378,13 +551,6 @@ export const Constants = {
         "rejected_by_student_affairs",
         "approved",
         "cancelled",
-      ],
-      user_role: [
-        "superadmin",
-        "student_affairs",
-        "adviser",
-        "officer",
-        "student",
       ],
     },
   },
