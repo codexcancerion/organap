@@ -100,6 +100,15 @@ This project ships **HeroUI v3**. Do **not** apply v2 patterns:
 - ❌ No `title="…"` props on `<Card>` — v3 uses compound components (`<Card.Header>`, `<Card.Title>`, `<Card.Content>`).
 - ❌ No `@heroui/system` or `@heroui/theme` — only `@heroui/react` + `@heroui/styles`.
 
+Always query the docs before introducing a component:
+
+- Skill: `.agents/skills/heroui-react/SKILL.md`
+- MCP server: `heroui-react` (configured in `.mcp.json`)
+- Scripts: `node .agents/skills/heroui-react/scripts/list_components.mjs`
+
+### HeroUI-First Policy & Pre-Styling Principle
+When a HeroUI component already provides the styling and interactive states you need, do **not** add custom Tailwind classes or CSS overrides that fight it. Use HeroUI's built-in props, variants (`primary`, `secondary`, `tertiary`, `ghost`, `danger`), sizes, slots, compound children, or colocated `tailwind-variants` (`tv`) recipes.
+
 ### Notifications & Toasts
 Always use **HeroUI Toast** (`toast.success()`, `toast.danger()`, `toast.warning()`, `toast.info()`, `toast()`) for user notifications, mutation outcomes, and error reporting. `<Toast.Provider />` is mounted at root in `src/app/providers.tsx`. Avoid bulky inline static alert banners inside cards when transient toast notifications are appropriate.
 
@@ -107,12 +116,11 @@ Always use **HeroUI Toast** (`toast.success()`, `toast.danger()`, `toast.warning
 
 ## Styling rules
 
-1. **Tailwind first.** Express styling with utility classes in markup, or with
-   a `tailwind-variants` recipe colocated with the component.
-2. **No raw CSS files** other than `src/styles/globals.css` (which is reserved
-   for Tailwind/HeroUI imports, `@theme` tokens, and global resets).
-3. **No inline `style={…}`** unless dynamically computed.
-4. **No CSS-in-JS** libraries (emotion, styled-components, etc.).
+1. **Tailwind first for layout.** Express structure and layout with Tailwind CSS v4 utility classes in markup, or with a `tailwind-variants` recipe colocated with the component.
+2. **HeroUI first for components.** Use pre-styled HeroUI v3 components with minimal customization for all interactive controls (Buttons, TextFields, Inputs, Forms, Cards, Modals, Drawers, Chips, Avatars, Tabs).
+3. **No raw CSS files** other than `src/styles/globals.css` (which is reserved for Tailwind/HeroUI imports, `@theme` tokens, and global resets).
+4. **No inline `style={…}`** unless dynamically computed (e.g. dynamic color picker or positioning).
+5. **No CSS-in-JS** libraries (emotion, styled-components, etc.).
 
 ---
 
