@@ -4,31 +4,35 @@ project_id = "organap"
 
 [api]
 enabled = true
-port = 54321
+port = 54351
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
-shadow_port = 54320
+port = 54352
+shadow_port = 54350
 major_version = 15
 
 [db.pooler]
 enabled = false
-port = 54329
+port = 54359
 
 [realtime]
 enabled = true
 
 [studio]
 enabled = true
-port = 54323
-api_url = "http://127.0.0.1:54321"
+port = 54353
+api_url = "http://127.0.0.1:54351"
 
-[inbucket]
+[local_smtp]
 enabled = true
-port = 54324
+port = 54354
+
+[analytics]
+enabled = false
+port = 54357
 
 [storage]
 enabled = true

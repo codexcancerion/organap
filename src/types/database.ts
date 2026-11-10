@@ -7,101 +7,57 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          school_id: string | null
-          display_name: string
-          avatar_url: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          role?: Database["public"]["Enums"]["user_role"]
-          school_id?: string | null
-          display_name?: string
-          avatar_url?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          school_id?: string | null
-          display_name?: string
-          avatar_url?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      organizations: {
-        Row: {
-          id: string
-          name: string
-          acronym: string
-          slug: string
-          description: string | null
-          category: string
-          logo_url: string | null
-          is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          acronym: string
-          slug: string
-          description?: string | null
-          category?: string
-          logo_url?: string | null
-          is_active?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          acronym?: string
-          slug?: string
-          description?: string | null
-          category?: string
-          logo_url?: string | null
-          is_active?: boolean
-          created_at?: string
-        }
-        Relationships: []
-      }
       organization_members: {
         Row: {
-          id: string
-          organization_id: string
-          user_id: string
-          org_role: string
-          position_title: string | null
           created_at: string
+          id: string
+          org_role: string
+          organization_id: string
+          position_title: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          organization_id: string
-          user_id: string
-          org_role?: string
-          position_title?: string | null
           created_at?: string
+          id?: string
+          org_role?: string
+          organization_id: string
+          position_title?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          organization_id?: string
-          user_id?: string
-          org_role?: string
-          position_title?: string | null
           created_at?: string
+          id?: string
+          org_role?: string
+          organization_id?: string
+          position_title?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -117,197 +73,137 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          acronym: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          acronym: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          acronym?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          school_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          school_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          school_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       venues: {
         Row: {
-          id: string
-          name: string
-          location: string | null
           capacity: number
+          created_at: string
+          id: string
           is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
+          location: string | null
           name: string
-          location?: string | null
+        }
+        Insert: {
           capacity?: number
-          is_active?: boolean
           created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          name: string
         }
         Update: {
+          capacity?: number
+          created_at?: string
           id?: string
+          is_active?: boolean
+          location?: string | null
           name?: string
-          location?: string | null
-          capacity?: number
-          is_active?: boolean
-          created_at?: string
-        }
-        Relationships: []
-      }
-      event_proposals: {
-        Row: {
-          id: string
-          organization_id: string
-          created_by: string
-          title: string
-          purpose: string
-          activities_desc: string
-          venue_id: string
-          start_time: string
-          end_time: string
-          registration_deadline: string
-          capacity: number
-          status: Database["public"]["Enums"]["proposal_status"]
-          cancellation_reason: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          organization_id: string
-          created_by: string
-          title: string
-          purpose: string
-          activities_desc: string
-          venue_id: string
-          start_time: string
-          end_time: string
-          registration_deadline: string
-          capacity: number
-          status?: Database["public"]["Enums"]["proposal_status"]
-          cancellation_reason?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          created_by?: string
-          title?: string
-          purpose?: string
-          activities_desc?: string
-          venue_id?: string
-          start_time?: string
-          end_time?: string
-          registration_deadline?: string
-          capacity?: number
-          status?: Database["public"]["Enums"]["proposal_status"]
-          cancellation_reason?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_proposals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_proposals_venue_id_fkey"
-            columns: ["venue_id"]
-            isOneToOne: false
-            referencedRelation: "venues"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      proposal_reviews: {
-        Row: {
-          id: string
-          proposal_id: string
-          reviewer_id: string
-          decision: string
-          remarks: string | null
-          stage: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          proposal_id: string
-          reviewer_id: string
-          decision: string
-          remarks?: string | null
-          stage: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          proposal_id?: string
-          reviewer_id?: string
-          decision?: string
-          remarks?: string | null
-          stage?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "proposal_reviews_proposal_id_fkey"
-            columns: ["proposal_id"]
-            isOneToOne: false
-            referencedRelation: "event_proposals"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      event_registrations: {
-        Row: {
-          id: string
-          proposal_id: string
-          student_id: string
-          status: string
-          registered_at: string
-          withdrawn_at: string | null
-        }
-        Insert: {
-          id?: string
-          proposal_id: string
-          student_id: string
-          status?: string
-          registered_at?: string
-          withdrawn_at?: string | null
-        }
-        Update: {
-          id?: string
-          proposal_id?: string
-          student_id?: string
-          status?: string
-          registered_at?: string
-          withdrawn_at?: string | null
-        }
-        Relationships: []
-      }
-      attendance_records: {
-        Row: {
-          id: string
-          proposal_id: string
-          registration_id: string
-          student_id: string
-          verified_by: string
-          method: string
-          checked_in_at: string
-        }
-        Insert: {
-          id?: string
-          proposal_id: string
-          registration_id: string
-          student_id: string
-          verified_by: string
-          method?: string
-          checked_in_at?: string
-        }
-        Update: {
-          id?: string
-          proposal_id?: string
-          registration_id?: string
-          student_id?: string
-          verified_by?: string
-          method?: string
-          checked_in_at?: string
         }
         Relationships: []
       }
@@ -316,10 +212,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_auth_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_org_adviser: { Args: { p_org_id: string }; Returns: boolean }
+      is_org_officer: { Args: { p_org_id: string }; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
     }
     Enums: {
-      user_role: "superadmin" | "student_affairs" | "adviser" | "officer" | "student"
       proposal_status:
         | "draft"
         | "pending_adviser"
@@ -330,9 +232,161 @@ export type Database = {
         | "rejected_by_student_affairs"
         | "approved"
         | "cancelled"
+      user_role:
+        | "superadmin"
+        | "student_affairs"
+        | "adviser"
+        | "officer"
+        | "student"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      proposal_status: [
+        "draft",
+        "pending_adviser",
+        "returned_by_adviser",
+        "rejected_by_adviser",
+        "pending_student_affairs",
+        "returned_by_student_affairs",
+        "rejected_by_student_affairs",
+        "approved",
+        "cancelled",
+      ],
+      user_role: [
+        "superadmin",
+        "student_affairs",
+        "adviser",
+        "officer",
+        "student",
+      ],
+    },
+  },
+} as const
+
