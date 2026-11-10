@@ -6,7 +6,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Clock,
-  ShieldCheck,
 } from "lucide-react";
 import { Chip } from "@heroui/react";
 import clsx from "clsx";
@@ -21,8 +20,6 @@ import {
   SNAP_THRESHOLD,
   PanelWidthPreset,
 } from "@/contexts/right_panel_context";
-import { useAuth } from "@/contexts/auth_context";
-
 function ResizerHandle({
   onPointerDown,
   onDoubleClick,
@@ -63,8 +60,6 @@ function ResizerHandle({
 }
 
 function DefaultRightPanelContent() {
-  const { user } = useAuth();
-
   return (
     <div
       className="flex flex-col gap-4 p-4 overflow-y-auto flex-1 scrollbar-none no-scrollbar"
@@ -82,29 +77,6 @@ function DefaultRightPanelContent() {
           <Clock className="text-accent" size={13} />
           Proposals require ≥ 7 days advance lead
         </span>
-      </div>
-
-      {/* Permissions / Group Status */}
-      <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted px-1">Active Privileges</span>
-        <div className="flex flex-wrap gap-1.5">
-          {user?.isSuperuser && (
-            <Chip className="bg-danger/10 text-danger border border-danger/20 text-[10px]" size="sm" variant="soft">
-              <ShieldCheck className="mr-1 inline" size={11} />
-              Superuser
-            </Chip>
-          )}
-          {user?.groups?.map((g) => (
-            <Chip key={g} className="text-[10px]" size="sm" variant="soft">
-              {g}
-            </Chip>
-          ))}
-          {!user?.isSuperuser && !user?.groups?.length && (
-            <Chip className="text-[10px]" size="sm" variant="soft">
-              Standard Attendee
-            </Chip>
-          )}
-        </div>
       </div>
     </div>
   );
