@@ -111,3 +111,4 @@ Events ending exactly when another starts do not conflict ($\text{end}_A = \text
 - **Database**: Supabase PostgreSQL with RLS
 - **Auth**: `@supabase/ssr` with Next.js 16 Proxy
 - **Testing**: Vitest + React Testing Library
+- **QR Utilities**: `qrcode` (RFC-compliant vector SVG generation for tickets & check-in passes)

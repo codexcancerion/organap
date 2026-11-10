@@ -113,9 +113,10 @@ export type EventRegistration = {
   id: string;
   proposalId: string;
   studentId: string;
-  status: "confirmed" | "withdrawn";
-  registeredAt: string;
-  withdrawnAt: string | null;
+  qrToken: string;
+  status: "confirmed" | "withdrawn" | "attended";
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AttendanceRecord = {
@@ -124,9 +125,23 @@ export type AttendanceRecord = {
   registrationId: string;
   studentId: string;
   verifiedBy: string;
-  method: "manual" | "qr";
-  checkedInAt: string;
+  checkInMethod: "manual" | "qr_scanner";
+  checkInAt: string;
 };
+
+export type InAppNotification = {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+};
+
+export type ServiceResult<T = void> =
+  | { success: true; data: T; error: null }
+  | { success: false; data: null; error: { message: string } };
 
 export type UserProfile = {
   id: string;

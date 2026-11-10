@@ -18,6 +18,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
+  Ticket,
+  Bell,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -66,7 +68,6 @@ export function Sidebar() {
   };
 
   const canManageVenues = isSuperuser || hasPermission("venues.view");
-  const canViewReports = isSuperuser || hasPermission("reports.view");
   const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("users.manage");
   const canManageGroups = isSuperuser || hasPermission("groups.view") || hasPermission("groups.manage");
 
@@ -74,8 +75,11 @@ export function Sidebar() {
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard, match: "/dashboard" },
     { label: "Proposals", href: "/proposals", icon: FileText, match: "/proposals" },
     { label: "Approved Events", href: "/events", icon: CalendarCheck2, match: "/events" },
-    { label: "Organizations", href: "/organizations", icon: Users, match: "/organizations" },
+    { label: "My Passes", href: "/registrations", icon: Ticket, match: "/registrations" },
     { label: "Attendance", href: "/attendance", icon: CheckCircle2, match: "/attendance" },
+    { label: "Reports", href: "/reports", icon: BarChart3, match: "/reports" },
+    { label: "Organizations", href: "/organizations", icon: Users, match: "/organizations" },
+    { label: "Notifications", href: "/notifications", icon: Bell, match: "/notifications" },
   ];
 
   const adminItems = [
@@ -87,9 +91,6 @@ export function Sidebar() {
       : []),
     ...(canManageVenues
       ? [{ label: "Venues", href: "/admin/venues", icon: Building2, match: "/admin/venues" }]
-      : []),
-    ...(canViewReports
-      ? [{ label: "Reports", href: "/admin/reports", icon: BarChart3, match: "/admin/reports" }]
       : []),
   ];
 

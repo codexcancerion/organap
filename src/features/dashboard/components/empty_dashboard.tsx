@@ -2,6 +2,7 @@
 
 // Dynamic permission-governed empty dashboard for OrGanap (Django-style RBAC).
 import type { AuthUser } from "@/types";
+import type { DashboardMetrics } from "../types";
 
 import React from "react";
 import NextLink from "next/link";
@@ -23,7 +24,13 @@ import clsx from "clsx";
 
 import { PageHeader } from "@/components/layout/page_header";
 
-export function EmptyDashboard({ user }: { user: AuthUser }) {
+export function EmptyDashboard({
+  user,
+  metrics,
+}: {
+  user: AuthUser;
+  metrics?: DashboardMetrics;
+}) {
   const displayName = user.displayName || user.email.split("@")[0];
 
   const hasPerm = (code: string) => user.isSuperuser || user.permissions.includes(code);
@@ -38,7 +45,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
   const primaryKpi = canApproveProposals
     ? {
         title: "Pending Approvals",
-        value: "0",
+        value: String(metrics?.pendingApprovals ?? 0),
         subtitle: "Awaiting review",
         icon: Inbox,
         colorClass: "bg-danger/10 text-danger",
@@ -46,7 +53,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
     : canEndorseProposals
       ? {
           title: "Awaiting Endorsement",
-          value: "0",
+          value: String(metrics?.awaitingEndorsement ?? 0),
           subtitle: "Faculty review",
           icon: Clock,
           colorClass: "bg-warning/10 text-warning",
@@ -54,14 +61,14 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
       : canCreateProposals
         ? {
             title: "My Draft Proposals",
-            value: "0",
+            value: String(metrics?.myDraftProposals ?? 0),
             subtitle: "In review / draft",
             icon: FileText,
             colorClass: "bg-danger/10 text-danger",
           }
         : {
             title: "My Registrations",
-            value: "0",
+            value: String(metrics?.myRegistrations ?? 0),
             subtitle: "Confirmed passes",
             icon: CalendarCheck2,
             colorClass: "bg-primary/10 text-primary",
@@ -69,7 +76,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
 
   const secondaryKpi = {
     title: "Active Events",
-    value: "0",
+    value: String(metrics?.activeEvents ?? 0),
     subtitle: "Scheduled on campus",
     icon: CheckCircle2,
     colorClass: "bg-primary/10 text-primary",
@@ -78,14 +85,14 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
   const tertiaryKpi = canManageVenues && !canCreateProposals
     ? {
         title: "Campus Venues",
-        value: "5",
+        value: String(metrics?.campusVenues ?? 5),
         subtitle: "Available spaces",
         icon: Building2,
         colorClass: "bg-default/20 text-muted",
       }
     : {
         title: "Recognized Orgs",
-        value: "5",
+        value: String(metrics?.recognizedOrgs ?? 5),
         subtitle: "Student organizations",
         icon: Users,
         colorClass: "bg-default/20 text-muted",

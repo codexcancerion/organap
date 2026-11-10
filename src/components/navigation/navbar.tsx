@@ -14,6 +14,7 @@ import {
   Users,
   LogIn,
   UserPlus,
+  Bell,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -66,6 +67,15 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
         </div>
 
         <div className="flex items-center gap-2">
+          {user && (
+            <NextLink
+              className="p-2 text-muted hover:text-foreground hover:bg-default/15 rounded-xl transition-colors relative"
+              href="/notifications"
+              title="Notifications"
+            >
+              <Bell size={18} />
+            </NextLink>
+          )}
           <ThemeSwitch />
 
           {!user && (

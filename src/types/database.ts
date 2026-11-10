@@ -34,6 +34,199 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          check_in_at: string
+          check_in_method: string
+          id: string
+          proposal_id: string
+          registration_id: string
+          student_id: string
+          verified_by: string
+        }
+        Insert: {
+          check_in_at?: string
+          check_in_method?: string
+          id?: string
+          proposal_id: string
+          registration_id: string
+          student_id: string
+          verified_by: string
+        }
+        Update: {
+          check_in_at?: string
+          check_in_method?: string
+          id?: string
+          proposal_id?: string
+          registration_id?: string
+          student_id?: string
+          verified_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "event_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "event_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_proposals: {
+        Row: {
+          activities_desc: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          capacity: number
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          organization_id: string
+          purpose: string
+          registration_deadline: string
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          activities_desc: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          capacity: number
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          organization_id: string
+          purpose: string
+          registration_deadline: string
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          activities_desc?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          capacity?: number
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          organization_id?: string
+          purpose?: string
+          registration_deadline?: string
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_proposals_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_proposals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_proposals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_proposals_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          created_at: string
+          id: string
+          proposal_id: string
+          qr_token: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          proposal_id: string
+          qr_token: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          proposal_id?: string
+          qr_token?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "event_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_permissions: {
         Row: {
           created_at: string
@@ -90,6 +283,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organization_members: {
         Row: {
@@ -238,6 +469,51 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_reviews: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          proposal_id: string
+          remarks: string | null
+          reviewer_id: string
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: string
+          proposal_id: string
+          remarks?: string | null
+          reviewer_id: string
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          proposal_id?: string
+          remarks?: string | null
+          reviewer_id?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_reviews_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "event_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           description: string | null
@@ -368,6 +644,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_event_proposal: {
+        Args: {
+          p_proposal_id: string
+          p_remarks?: string
+          p_reviewer_id: string
+        }
+        Returns: Json
+      }
+      cancel_approved_event: {
+        Args: {
+          p_cancelled_by: string
+          p_proposal_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      check_venue_conflict: {
+        Args: {
+          p_end_time: string
+          p_exclude_proposal_id?: string
+          p_start_time: string
+          p_venue_id: string
+        }
+        Returns: boolean
+      }
       get_user_groups: {
         Args: { p_user_id?: string }
         Returns: {
@@ -399,6 +700,23 @@ export type Database = {
       }
       is_staff: { Args: { p_user_id?: string }; Returns: boolean }
       is_superuser: { Args: { p_user_id?: string }; Returns: boolean }
+      record_attendance_entry: {
+        Args: {
+          p_method?: string
+          p_proposal_id: string
+          p_token_or_student_id: string
+          p_verified_by: string
+        }
+        Returns: Json
+      }
+      register_for_event: {
+        Args: { p_proposal_id: string; p_student_id: string }
+        Returns: Json
+      }
+      withdraw_from_event: {
+        Args: { p_registration_id: string; p_student_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       proposal_status:
