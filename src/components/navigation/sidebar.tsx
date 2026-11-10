@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
-import { Avatar, Chip } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 import {
   LayoutDashboard,
   FileText,
@@ -66,10 +66,6 @@ export function Sidebar() {
     router.refresh();
   };
 
-  const primaryBadge = isSuperuser
-    ? "Superuser"
-    : user?.groups?.[0] || (isStaff ? "Staff" : "Member");
-
   const canManageVenues = isSuperuser || hasPermission("venues.view");
   const canViewReports = isSuperuser || hasPermission("reports.view");
   const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("users.manage");
@@ -105,25 +101,50 @@ export function Sidebar() {
         isCollapsed ? "w-18" : "w-64",
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-border/30">
-        {!isCollapsed ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted">
-              Navigation
-            </span>
-            <Chip size="sm" variant="soft">
-              {primaryBadge}
-            </Chip>
-          </div>
-        ) : null}
-        <button
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors mx-auto"
-          type="button"
-          onClick={handleToggle}
+      {/* ── User Header Block ────────────────────────────────── */}
+      <div className="p-3 border-b border-border/30">
+        <NextLink
+          className={clsx(
+            "flex items-center gap-3 p-1.5 rounded-2xl hover:bg-default/15 transition-colors group",
+            isCollapsed && "justify-center px-0",
+          )}
+          href="/profile"
+          title={isCollapsed ? (user?.displayName || user?.email || "Profile") : "View Profile"}
         >
-          {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-        </button>
+          <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
+            {user?.avatarUrl ? (
+              <Avatar.Image
+                alt={user.displayName ?? user.email}
+                className="object-cover"
+                src={user.avatarUrl}
+              />
+            ) : null}
+            <Avatar.Fallback className="bg-primary/10 text-primary">
+              {initialsFor(user?.displayName, user?.email)}
+            </Avatar.Fallback>
+          </Avatar>
+          {!isCollapsed && (
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                {user?.displayName || user?.email?.split("@")[0] || "User"}
+              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[11px] text-muted truncate">
+                  {user?.schoolId || user?.email}
+                </span>
+                {isSuperuser ? (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-danger/10 text-danger border border-danger/20 shrink-0">
+                    Superuser
+                  </span>
+                ) : isStaff ? (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 shrink-0">
+                    Staff
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </NextLink>
       </div>
 
       <div
@@ -187,7 +208,7 @@ export function Sidebar() {
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-2 pt-3 border-t border-border/30">
+        <div className="flex flex-col gap-1 pt-3 border-t border-border/30">
           <NextLink
             className={clsx(
               "flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted hover:text-foreground hover:bg-default/15 transition-colors",
@@ -210,54 +231,54 @@ export function Sidebar() {
             <Settings size={18} />
             {!isCollapsed ? <span>Settings</span> : null}
           </NextLink>
+        </div>
+      </div>
 
-          {!isCollapsed && user ? (
-            <div className="flex items-center justify-between p-2 mt-2 rounded-2xl bg-default/10 border border-border/20">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Avatar className="w-8 h-8 text-xs font-bold shrink-0" variant="soft">
-                  {user.avatarUrl ? (
-                    <Avatar.Image
-                      alt={user.displayName ?? user.email}
-                      className="object-cover"
-                      src={user.avatarUrl}
-                    />
-                  ) : null}
-                  <Avatar.Fallback>
-                    {initialsFor(user.displayName, user.email)}
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-semibold text-foreground truncate">
-                    {user.displayName || user.email.split("@")[0]}
-                  </span>
-                  <span className="text-[10px] text-muted truncate">
-                    {user.schoolId || user.email}
-                  </span>
-                </div>
-              </div>
-              <button
-                aria-label="Sign out"
-                className="p-1 text-muted hover:text-danger transition-colors cursor-pointer"
-                type="button"
-                onClick={handleSignOut}
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          ) : (
+      {/* ── Footer with Sign Out & Collapse Button ──────────── */}
+      <div className="p-2 sm:p-3 border-t border-border/30 bg-surface/50">
+        {!isCollapsed ? (
+          <div className="flex items-center justify-between gap-2">
             <button
               aria-label="Sign out"
-              className={clsx(
-                "flex items-center gap-3 p-2 text-muted hover:text-danger rounded-xl hover:bg-default/15 transition-colors cursor-pointer",
-                isCollapsed && "justify-center",
-              )}
+              className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer"
               type="button"
               onClick={handleSignOut}
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
+              <span>Sign Out</span>
             </button>
-          )}
-        </div>
+            <button
+              aria-label="Collapse sidebar"
+              className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+              title="Collapse sidebar"
+              type="button"
+              onClick={handleToggle}
+            >
+              <PanelLeftClose size={17} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <button
+              aria-label="Sign out"
+              className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-colors cursor-pointer"
+              title="Sign Out"
+              type="button"
+              onClick={handleSignOut}
+            >
+              <LogOut size={17} />
+            </button>
+            <button
+              aria-label="Expand sidebar"
+              className="p-2 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+              title="Expand sidebar"
+              type="button"
+              onClick={handleToggle}
+            >
+              <PanelLeftOpen size={17} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

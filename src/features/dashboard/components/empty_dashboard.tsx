@@ -19,6 +19,7 @@ import {
   Sparkles,
   ShieldCheck,
 } from "lucide-react";
+import clsx from "clsx";
 
 export function EmptyDashboard({ user }: { user: AuthUser }) {
   const displayName = user.displayName || user.email.split("@")[0];
@@ -31,23 +32,82 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
   const canRegisterEvents = hasPerm("events.register");
   const canManageVenues = hasPerm("venues.create") || hasPerm("venues.change");
 
+  // Determine the 3 most important KPIs for the user's role
+  const primaryKpi = canApproveProposals
+    ? {
+        title: "Pending Approvals",
+        value: "0",
+        subtitle: "Awaiting review",
+        icon: Inbox,
+        colorClass: "bg-danger/10 text-danger",
+      }
+    : canEndorseProposals
+      ? {
+          title: "Awaiting Endorsement",
+          value: "0",
+          subtitle: "Faculty review",
+          icon: Clock,
+          colorClass: "bg-warning/10 text-warning",
+        }
+      : canCreateProposals
+        ? {
+            title: "My Draft Proposals",
+            value: "0",
+            subtitle: "In review / draft",
+            icon: FileText,
+            colorClass: "bg-danger/10 text-danger",
+          }
+        : {
+            title: "My Registrations",
+            value: "0",
+            subtitle: "Confirmed passes",
+            icon: CalendarCheck2,
+            colorClass: "bg-primary/10 text-primary",
+          };
+
+  const secondaryKpi = {
+    title: "Active Events",
+    value: "0",
+    subtitle: "Scheduled on campus",
+    icon: CheckCircle2,
+    colorClass: "bg-primary/10 text-primary",
+  };
+
+  const tertiaryKpi = canManageVenues && !canCreateProposals
+    ? {
+        title: "Campus Venues",
+        value: "5",
+        subtitle: "Available spaces",
+        icon: Building2,
+        colorClass: "bg-default/20 text-muted",
+      }
+    : {
+        title: "Recognized Orgs",
+        value: "5",
+        subtitle: "Student organizations",
+        icon: Users,
+        colorClass: "bg-default/20 text-muted",
+      };
+
+  const kpis = [primaryKpi, secondaryKpi, tertiaryKpi];
+
   return (
-    <div className="flex flex-col gap-8 w-full animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-surface border border-border/40 shadow-sm">
+    <div className="flex flex-col gap-6 w-full animate-fade-in">
+      {/* Welcome Banner (Bare contents snapped to end) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full pt-1 pb-1">
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Hello, {displayName}!
             </h1>
             {user.isSuperuser && (
-              <Chip className="bg-danger/10 text-danger border border-danger/20" size="sm" variant="soft">
+              <Chip className="bg-danger/10 text-danger border border-danger/20 font-semibold" size="sm" variant="soft">
                 <ShieldCheck className="mr-1 inline" size={12} />
                 SUPERUSER
               </Chip>
             )}
             {user.isStaff && !user.isSuperuser && (
-              <Chip className="bg-primary/10 text-primary border border-primary/20" size="sm" variant="soft">
+              <Chip className="bg-primary/10 text-primary border border-primary/20 font-semibold" size="sm" variant="soft">
                 STAFF
               </Chip>
             )}
@@ -62,7 +122,7 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2.5 shrink-0 sm:ml-auto">
           {canCreateProposals && (
             <NextLink href="/proposals/new">
               <Button size="md" variant="primary">
@@ -92,101 +152,31 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
         </div>
       </div>
 
-      {/* Dynamic Metric Cards based on Permissions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {canApproveProposals && (
-          <Card className="p-4 border border-border/30">
-            <Card.Content className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase">Pending Approvals</p>
-                <p className="text-2xl font-bold text-foreground mt-1">0</p>
+      {/* 3 Redesigned Primary KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {kpis.map((kpi) => (
+          <Card
+            key={kpi.title}
+            className="p-5 border border-border/40 bg-surface rounded-3xl shadow-xs hover:border-border/80 transition-all"
+          >
+            <Card.Content className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                  {kpi.title}
+                </span>
+                <span className="text-3xl font-extrabold tracking-tight text-foreground mt-1">
+                  {kpi.value}
+                </span>
+                <span className="text-xs text-muted mt-1 truncate">
+                  {kpi.subtitle}
+                </span>
               </div>
-              <div className="p-3 rounded-2xl bg-danger/10 text-danger">
-                <Inbox size={20} />
-              </div>
-            </Card.Content>
-          </Card>
-        )}
-
-        {canEndorseProposals && (
-          <Card className="p-4 border border-border/30">
-            <Card.Content className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase">Awaiting Endorsement</p>
-                <p className="text-2xl font-bold text-foreground mt-1">0</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-warning/10 text-warning">
-                <Clock size={20} />
+              <div className={clsx("p-3 rounded-2xl shrink-0 shadow-xs", kpi.colorClass)}>
+                <kpi.icon size={22} />
               </div>
             </Card.Content>
           </Card>
-        )}
-
-        {canCreateProposals && (
-          <Card className="p-4 border border-border/30">
-            <Card.Content className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase">My Draft Proposals</p>
-                <p className="text-2xl font-bold text-foreground mt-1">0</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-default/20 text-muted">
-                <FileText size={20} />
-              </div>
-            </Card.Content>
-          </Card>
-        )}
-
-        {canManageVenues && (
-          <Card className="p-4 border border-border/30">
-            <Card.Content className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase">Campus Venues</p>
-                <p className="text-2xl font-bold text-foreground mt-1">5</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-accent/10 text-accent">
-                <Building2 size={20} />
-              </div>
-            </Card.Content>
-          </Card>
-        )}
-
-        <Card className="p-4 border border-border/30">
-          <Card.Content className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted uppercase">Recognized Orgs</p>
-              <p className="text-2xl font-bold text-foreground mt-1">5</p>
-            </div>
-            <div className="p-3 rounded-2xl bg-default/20 text-muted">
-              <Users size={20} />
-            </div>
-          </Card.Content>
-        </Card>
-
-        {canRegisterEvents && (
-          <Card className="p-4 border border-border/30">
-            <Card.Content className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-muted uppercase">My Registrations</p>
-                <p className="text-2xl font-bold text-foreground mt-1">0</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-accent/10 text-accent">
-                <CalendarCheck2 size={20} />
-              </div>
-            </Card.Content>
-          </Card>
-        )}
-
-        <Card className="p-4 border border-border/30">
-          <Card.Content className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-muted uppercase">Active Events</p>
-              <p className="text-2xl font-bold text-foreground mt-1">0</p>
-            </div>
-            <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-              <CheckCircle2 size={20} />
-            </div>
-          </Card.Content>
-        </Card>
+        ))}
       </div>
 
       {/* Empty State Card */}

@@ -5,15 +5,10 @@ import * as React from "react";
 import {
   PanelRightClose,
   PanelRightOpen,
-  CalendarCheck2,
-  FilePlus,
   Clock,
   ShieldCheck,
-  Building2,
-  Users,
 } from "lucide-react";
-import { Button, Chip } from "@heroui/react";
-import NextLink from "next/link";
+import { Chip } from "@heroui/react";
 import clsx from "clsx";
 
 import {
@@ -68,12 +63,7 @@ function ResizerHandle({
 }
 
 function DefaultRightPanelContent() {
-  const { user, hasPermission, isSuperuser } = useAuth();
-
-  const canCreate = isSuperuser || hasPermission("proposals.create");
-  const canApprove = isSuperuser || hasPermission("proposals.approve");
-  const canManageUsers = isSuperuser || hasPermission("users.view") || hasPermission("users.manage");
-  const canManageGroups = isSuperuser || hasPermission("groups.view") || hasPermission("groups.manage");
+  const { user } = useAuth();
 
   return (
     <div
@@ -92,61 +82,6 @@ function DefaultRightPanelContent() {
           <Clock className="text-accent" size={13} />
           Proposals require ≥ 7 days advance lead
         </span>
-      </div>
-
-      {/* Quick Action Dock */}
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted px-1">Quick Actions</span>
-        
-        {canCreate && (
-          <NextLink href="/proposals/new">
-            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="primary">
-              <FilePlus size={15} />
-              Draft Event Proposal
-            </Button>
-          </NextLink>
-        )}
-
-        {canApprove && (
-          <NextLink href="/proposals">
-            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="secondary">
-              <Clock size={15} />
-              Review Pending Queue
-            </Button>
-          </NextLink>
-        )}
-
-        <NextLink href="/events">
-          <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
-            <CalendarCheck2 size={15} />
-            Browse Campus Calendar
-          </Button>
-        </NextLink>
-
-        <NextLink href="/organizations">
-          <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
-            <Building2 size={15} />
-            Recognized Organizations
-          </Button>
-        </NextLink>
-
-        {canManageUsers && (
-          <NextLink href="/admin/users">
-            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
-              <Users size={15} />
-              User Directory
-            </Button>
-          </NextLink>
-        )}
-
-        {canManageGroups && (
-          <NextLink href="/admin/groups">
-            <Button className="w-full justify-start text-xs font-medium" size="sm" variant="ghost">
-              <ShieldCheck size={15} />
-              Groups & Permissions
-            </Button>
-          </NextLink>
-        )}
       </div>
 
       {/* Permissions / Group Status */}
@@ -288,19 +223,22 @@ export function RightPanel() {
           "hidden md:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-6rem)] w-12 bg-surface border border-border/40 rounded-3xl overflow-hidden relative shadow-xs transition-all duration-200",
         )}
       >
-        <div className="flex flex-col items-center py-4 gap-4 h-full">
-          <button
-            aria-label="Expand panel"
-            className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-default/20 transition-colors"
-            type="button"
-            onClick={toggleCollapse}
-          >
-            <PanelRightOpen size={18} />
-          </button>
+        <div className="flex flex-col items-center justify-between h-full">
           <div className="flex-1 flex items-center justify-center">
             <span className="text-[11px] font-bold uppercase tracking-wider text-muted rotate-90 whitespace-nowrap">
-              Campus Feed
+              Campus Hub
             </span>
+          </div>
+          <div className="p-2 sm:p-3 border-t border-border/30 w-full flex items-center justify-center bg-surface/50">
+            <button
+              aria-label="Expand panel"
+              className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+              title="Expand panel"
+              type="button"
+              onClick={toggleCollapse}
+            >
+              <PanelRightOpen size={17} />
+            </button>
           </div>
         </div>
       </aside>
@@ -325,29 +263,29 @@ export function RightPanel() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted">
-            Campus Hub
-          </span>
-          <Chip className="text-[10px]" size="sm" variant="soft">
-            {preset}
-          </Chip>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            aria-label="Collapse right panel"
-            className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors"
-            type="button"
-            onClick={toggleCollapse}
-          >
-            <PanelRightClose size={17} />
-          </button>
-        </div>
+      <div className="flex items-center px-4 py-3 border-b border-border/30 h-[61px]">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted">
+          Campus Hub
+        </span>
       </div>
 
       {/* Panel Body */}
-      {render ? render() : <DefaultRightPanelContent />}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {render ? render() : <DefaultRightPanelContent />}
+      </div>
+
+      {/* ── Footer with Collapse Button consistent with Sidebar ──── */}
+      <div className="p-2 sm:p-3 border-t border-border/30 bg-surface/50 flex items-center justify-end">
+        <button
+          aria-label="Collapse right panel"
+          className="p-1.5 rounded-xl hover:bg-default/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+          title="Collapse panel"
+          type="button"
+          onClick={toggleCollapse}
+        >
+          <PanelRightClose size={17} />
+        </button>
+      </div>
     </aside>
   );
 }
