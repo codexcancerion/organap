@@ -11,6 +11,8 @@ export const getDashboardMetrics = cache(async (
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  // WHY: { count: 'exact', head: true } asks PostgreSQL for COUNT(*) metadata without transferring
+  // row bodies over the network, keeping initial role dashboard metrics ultra fast.
   const [
     pendingApprovalsRes,
     awaitingEndorsementRes,

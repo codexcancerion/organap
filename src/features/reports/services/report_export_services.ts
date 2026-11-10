@@ -67,7 +67,9 @@ export function generateAttendanceReportCsv(
     rows.push(row.join(","));
   }
 
-  // Prepend UTF-8 BOM so Excel opens with proper character encoding
+  // INVARIANT: RFC 4180 section 2.1 requires \r\n (CRLF) as the record delimiter across all platforms.
+  // WHY: Prepending the UTF-8 Byte Order Mark (\uFEFF) forces Microsoft Excel on Windows to read the CSV in UTF-8
+  // rather than falling back to ANSI/Windows-1252, which would corrupt accented characters and student names with 'ñ'.
   return "\uFEFF" + rows.join(CRLF);
 }
 

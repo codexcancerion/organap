@@ -5,6 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 
 /**
  * Check if a venue is already booked for an overlapping approved event (FR-07).
+ * INVARIANT: Checks the universal interval intersection theorem (startA < endB AND endA > startB) to detect
+ * partial overlaps, exact matches, and full encapsulations without false negatives.
  */
 export async function checkVenueConflict(
   venueId: string,

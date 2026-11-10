@@ -64,7 +64,9 @@ export const getAttendanceEligibleEvents = cache(async (
   return rows.map((row) => {
     const startMs = new Date(row.start_time).getTime();
     const endMs = new Date(row.end_time).getTime();
-    const openMs = startMs - 30 * 60 * 1000; // 30-min buffer
+    // WHY: Advance 30-minute buffer accommodates physical entrance queuing and ticket verification
+    // prior to opening keynote while preventing attendance records from being created days in advance.
+    const openMs = startMs - 30 * 60 * 1000;
 
     const activeRegs = (row.registrations ?? []).filter(
       (r) => r.status === "confirmed" || r.status === "attended"
