@@ -157,24 +157,25 @@ export function EmptyDashboard({ user }: { user: AuthUser }) {
         {kpis.map((kpi) => (
           <Card
             key={kpi.title}
-            className="p-5 border border-border/40 bg-surface rounded-3xl shadow-xs hover:border-border/80 transition-all"
+            className="p-5 border border-border/40 bg-surface rounded-3xl shadow-xs hover:border-border/80 transition-all flex flex-col justify-between gap-4"
           >
-            <Card.Content className="flex items-start justify-between gap-4">
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-                  {kpi.title}
-                </span>
-                <span className="text-3xl font-extrabold tracking-tight text-foreground mt-1">
-                  {kpi.value}
-                </span>
-                <span className="text-xs text-muted mt-1 truncate">
-                  {kpi.subtitle}
-                </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                {kpi.title}
+              </span>
+              <div className={clsx("p-2.5 rounded-2xl shrink-0 shadow-xs", kpi.colorClass)}>
+                <kpi.icon size={20} />
               </div>
-              <div className={clsx("p-3 rounded-2xl shrink-0 shadow-xs", kpi.colorClass)}>
-                <kpi.icon size={22} />
-              </div>
-            </Card.Content>
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <span className="text-3xl font-extrabold tracking-tight text-foreground">
+                {kpi.value}
+              </span>
+              <span className="text-xs text-muted truncate">
+                {kpi.subtitle}
+              </span>
+            </div>
           </Card>
         ))}
       </div>
