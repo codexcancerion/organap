@@ -148,13 +148,16 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
       </div>
 
       {/* Group Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {filteredGroups.map((group) => {
           const isSystem = isProtectedSystemGroup(group.name);
 
           return (
-            <Card key={group.id} className="border border-border/30 hover:border-border/60 transition-colors bg-surface">
-              <Card.Header className="flex flex-col gap-1.5 pb-0">
+            <Card
+              key={group.id}
+              className="border border-border/30 hover:border-border/60 transition-colors bg-surface p-4 gap-3"
+            >
+              <Card.Header className="flex flex-col gap-1 p-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-base text-foreground truncate">
                     {group.name}
@@ -175,7 +178,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
                 )}
               </Card.Header>
 
-              <Card.Content className="pt-4 pb-2">
+              <Card.Content className="p-0 flex-initial">
                 <div className="flex items-center gap-4 text-xs text-muted font-medium">
                   <div className="flex items-center gap-1.5">
                     <Users className="text-accent" size={14} />
@@ -188,7 +191,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
                 </div>
               </Card.Content>
 
-              <Card.Footer className="pt-1 flex items-center justify-between">
+              <Card.Footer className="p-0 pt-1 flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <Button
                     aria-label={`Edit ${group.name}`}
