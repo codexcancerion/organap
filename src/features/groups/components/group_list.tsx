@@ -15,7 +15,6 @@ import {
   toast,
 } from "@heroui/react";
 import {
-  Shield,
   Plus,
   Users,
   KeyRound,
@@ -155,34 +154,29 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
 
           return (
             <Card key={group.id} className="border border-border/30 hover:border-border/60 transition-colors bg-surface">
-              <Card.Header className="flex items-start gap-3 pb-2">
-                <div className="p-2.5 rounded-2xl bg-accent/10 text-accent shrink-0">
-                  <Shield size={20} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-base text-foreground truncate">
-                      {group.name}
-                    </span>
-                    {isSystem && (
-                      <Chip className="text-[10px]" color="default" size="sm" variant="soft">
-                        <Lock className="mr-1 inline" size={10} />
-                        System Group
-                      </Chip>
-                    )}
-                  </div>
-                  {group.description ? (
-                    <p className="text-xs text-muted mt-1 line-clamp-2">
-                      {group.description}
-                    </p>
-                  ) : (
-                    <span className="text-xs text-muted italic mt-1">No description provided</span>
+              <Card.Header className="flex flex-col gap-1.5 pb-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-base text-foreground truncate">
+                    {group.name}
+                  </span>
+                  {isSystem && (
+                    <Chip className="text-[10px]" color="default" size="sm" variant="soft">
+                      <Lock className="mr-1 inline" size={10} />
+                      System Group
+                    </Chip>
                   )}
                 </div>
+                {group.description ? (
+                  <p className="text-xs text-muted line-clamp-2 leading-relaxed">
+                    {group.description}
+                  </p>
+                ) : (
+                  <span className="text-xs text-muted italic">No description provided</span>
+                )}
               </Card.Header>
 
-              <Card.Content className="pt-2">
-                <div className="flex items-center gap-4 text-xs text-muted">
+              <Card.Content className="pt-4 pb-2">
+                <div className="flex items-center gap-4 text-xs text-muted font-medium">
                   <div className="flex items-center gap-1.5">
                     <Users className="text-accent" size={14} />
                     <span>{group.memberCount} Members</span>
@@ -194,7 +188,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
                 </div>
               </Card.Content>
 
-              <Card.Footer className="border-t border-border/20 pt-3 flex items-center justify-between">
+              <Card.Footer className="pt-1 flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <Button
                     aria-label={`Edit ${group.name}`}
