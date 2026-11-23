@@ -15,7 +15,7 @@ export function Logo({ className }: { className?: string }) {
       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-accent text-accent-foreground shadow-sm">
         <CalendarCheck2 size={18} />
       </div>
-      <span className="flex items-baseline font-logo font-normal uppercase tracking-wide leading-none text-xl">
+      <span className="flex items-baseline font-bowlby font-normal uppercase tracking-wide leading-none text-xl">
         <span className="text-foreground">OR</span>
         <span className="text-accent">GANAP</span>
       </span>

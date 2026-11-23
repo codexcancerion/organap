@@ -1,4 +1,8 @@
-import { Bowlby_One, Inter, JetBrains_Mono } from "next/font/google";
+import {
+  Bowlby_One_SC as FontBowlby,
+  Inter,
+  JetBrains_Mono,
+} from "next/font/google";
 
 export const fontSans = Inter({
   subsets: ["latin"],
@@ -12,9 +16,9 @@ export const fontMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const fontLogo = Bowlby_One({
+export const fontBowlby = FontBowlby({
   subsets: ["latin"],
   weight: "400",
-  variable: "--font-bowlby",
+  variable: "--font-bowlby-sc",
   display: "swap",
 });

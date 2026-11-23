@@ -4,7 +4,7 @@ import Link from "next/link";
 import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
-import { fontSans, fontMono, fontLogo } from "@/config/fonts";
+import { fontSans, fontMono, fontBowlby } from "@/config/fonts";
 import { Navbar } from "@/components/navigation/navbar";
 import { getCurrentUser } from "@/features/auth/services/auth_queries";
 import { getUnreadNotificationCount } from "@/features/notifications/services/notification_queries";
@@ -52,7 +52,7 @@ export default async function RootLayout({
   return (
     <html
       suppressHydrationWarning
-      className={clsx(fontSans.variable, fontMono.variable, fontLogo.variable)}
+      className={clsx(fontSans.variable, fontMono.variable, fontBowlby.variable)}
       lang="en"
     >
       <body className="min-h-screen text-foreground bg-background font-sans antialiased">

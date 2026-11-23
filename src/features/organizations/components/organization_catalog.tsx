@@ -10,8 +10,9 @@ import {
   Card,
   Chip,
   EmptyState,
+  ListBox,
   SearchField,
-  Tabs,
+  Select,
 } from "@heroui/react";
 import {
   ArrowRight,
@@ -143,23 +144,32 @@ export function OrganizationCatalog({
           </SearchField.Group>
         </SearchField>
 
-        {/* Category Filter Tabs */}
-        <Tabs
-          className="w-full md:w-auto"
-          selectedKey={selectedCategory}
-          onSelectionChange={(key) => setSelectedCategory(String(key))}
+        {/* Category Filter Dropdown */}
+        <Select
+          aria-label="Filter organizations by category"
+          className="w-full md:w-56"
+          value={selectedCategory}
+          onChange={(val) => setSelectedCategory(val ? String(val) : "all")}
         >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Filter organizations by category">
-              {categories.map((cat) => (
-                <Tabs.Tab key={cat} className="text-xs whitespace-nowrap" id={cat}>
-                  {CATEGORY_FILTER_LABELS[cat] ?? cat}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+          <Select.Trigger>
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {categories.map((cat) => {
+                const label = CATEGORY_FILTER_LABELS[cat] ?? cat;
+
+                return (
+                  <ListBox.Item key={cat} id={cat} textValue={label}>
+                    {label}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                );
+              })}
+            </ListBox>
+          </Select.Popover>
+        </Select>
       </div>
 
       {/* Organizations Grid */}

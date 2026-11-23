@@ -66,6 +66,9 @@ describe("<OrganizationCatalog />", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("2 Recognized Groups")).toBeInTheDocument();
     expect(
+      screen.getByRole("button", { name: /All Categories.*Filter organizations by category/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: /Register Organization/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Computer Science Society")).toBeInTheDocument();

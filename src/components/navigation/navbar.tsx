@@ -50,7 +50,7 @@ export const Navbar = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md">
       <div
         className={clsx(
           "flex h-16 items-center justify-between gap-4 px-4 sm:px-6",
