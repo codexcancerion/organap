@@ -10,18 +10,18 @@ import {
   Button,
   Card,
   Chip,
-  Input,
+  EmptyState,
   ListBox,
+  SearchField,
   Select,
   Table,
-  TextField,
 } from "@heroui/react";
 import {
-  Search,
-  Users,
-  ShieldAlert,
+  Building2,
   Edit2,
   Filter,
+  ShieldAlert,
+  Users,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page_header";
@@ -58,22 +58,27 @@ export function UserTable({ users, allGroups }: UserTableProps) {
     const q = search.trim().toLowerCase();
 
     return users.filter((user) => {
-      // 1. Search Query
       if (q) {
         const nameMatch = user.displayName?.toLowerCase().includes(q);
         const idMatch = user.schoolId?.toLowerCase().includes(q);
+        const emailMatch = user.email?.toLowerCase().includes(q);
+        const orgMatch = (user.organizations ?? []).some(
+          (o) =>
+            o.acronym.toLowerCase().includes(q) ||
+            o.name.toLowerCase().includes(q)
+        );
 
-        if (!nameMatch && !idMatch) return false;
+        if (!nameMatch && !idMatch && !emailMatch && !orgMatch) return false;
       }
 
-      // 2. Group Filter
       if (selectedGroup !== "all") {
-        const inGroup = user.groups.some((g) => g.id === selectedGroup || g.name === selectedGroup);
+        const inGroup = user.groups.some(
+          (g) => g.id === selectedGroup || g.name === selectedGroup
+        );
 
         if (!inGroup) return false;
       }
 
-      // 3. Status Filter
       if (statusFilter === "active" && !user.isActive) return false;
       if (statusFilter === "inactive" && user.isActive) return false;
       if (statusFilter === "staff" && !user.isStaff) return false;
@@ -102,31 +107,25 @@ export function UserTable({ users, allGroups }: UserTableProps) {
             {users.length} Users Registered
           </Chip>
         }
-        description="Inspect verified campus profiles, toggle staff and account status, and assign dynamic groups."
+        description="Inspect verified campus profiles, organization affiliations, staff flags, and dynamic group assignments."
         title="User Directory & Accounts"
       />
 
       {/* Filter Toolbar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="w-full md:w-80">
-          <TextField
-            aria-label="Search users by name or ID"
-            value={search}
-            onChange={(val) => setSearch(val)}
-          >
-            <div className="relative w-full">
-              <Input
-                className="pl-9"
-                placeholder="Search by name or Student/Staff ID…"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={15}
-              />
-            </div>
-          </TextField>
-        </div>
+        <SearchField
+          aria-label="Search users by name, ID, email, or organization"
+          className="w-full md:w-80"
+          name="user-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by name, ID, email, or org…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
 
         {/* Group & Status Selectors */}
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -200,113 +199,146 @@ export function UserTable({ users, allGroups }: UserTableProps) {
       </div>
 
       {/* Roster Table */}
-      <Card className="border border-border/30 overflow-hidden bg-surface shadow-xs">
-        <Table className="w-full">
-          <Table.ScrollContainer>
-            <Table.Content aria-label="Campus User Directory Table">
-              <Table.Header>
-                <Table.Column isRowHeader className="py-3 px-4 text-xs font-semibold text-muted">User</Table.Column>
-                <Table.Column className="py-3 px-4 text-xs font-semibold text-muted">Status</Table.Column>
-                <Table.Column className="py-3 px-4 text-xs font-semibold text-muted">Role & Groups</Table.Column>
-                <Table.Column className="py-3 px-4 text-xs font-semibold text-muted text-end">Actions</Table.Column>
-              </Table.Header>
-              <Table.Body items={filteredUsers}>
-                {(user) => (
-                  <Table.Row key={user.id} className="border-t border-border/20 hover:bg-default/5 transition-colors">
-                    <Table.Cell className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
-                          {user.avatarUrl ? (
-                            <Avatar.Image
-                              alt={user.displayName ?? user.id}
-                              className="object-cover"
-                              src={user.avatarUrl}
-                            />
-                          ) : null}
-                          <Avatar.Fallback className="bg-accent/15 text-accent font-semibold">
-                            {initialsFor(user.displayName)}
-                          </Avatar.Fallback>
-                        </Avatar>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold text-foreground truncate">
-                            {user.displayName || "Anonymous User"}
-                          </span>
-                          <span className="text-xs text-muted font-mono">
-                            {user.schoolId ? `ID: ${user.schoolId}` : user.id.slice(0, 8)}
-                          </span>
+      <Card className="border border-border/30 overflow-hidden bg-surface shadow-xs p-0">
+        {filteredUsers.length > 0 ? (
+          <Table className="w-full">
+            <Table.ScrollContainer>
+              <Table.Content aria-label="Campus User Directory Table">
+                <Table.Header>
+                  <Table.Column isRowHeader className="py-3 px-4 text-xs font-semibold text-muted">
+                    User
+                  </Table.Column>
+                  <Table.Column className="py-3 px-4 text-xs font-semibold text-muted">
+                    Status
+                  </Table.Column>
+                  <Table.Column className="py-3 px-4 text-xs font-semibold text-muted">
+                    Role, Groups &amp; Orgs
+                  </Table.Column>
+                  <Table.Column className="py-3 px-4 text-xs font-semibold text-muted text-end">
+                    Actions
+                  </Table.Column>
+                </Table.Header>
+                <Table.Body items={filteredUsers}>
+                  {(user) => (
+                    <Table.Row
+                      key={user.id}
+                      className="border-t border-border/20 hover:bg-default/5 transition-colors"
+                    >
+                      <Table.Cell className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-9 h-9 text-xs font-bold shrink-0" variant="soft">
+                            {user.avatarUrl ? (
+                              <Avatar.Image
+                                alt={user.displayName ?? user.id}
+                                className="object-cover"
+                                src={user.avatarUrl}
+                              />
+                            ) : null}
+                            <Avatar.Fallback className="bg-accent/15 text-accent font-semibold">
+                              {initialsFor(user.displayName)}
+                            </Avatar.Fallback>
+                          </Avatar>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-semibold text-foreground truncate">
+                              {user.displayName || "Anonymous User"}
+                            </span>
+                            <span className="text-xs text-muted font-mono truncate">
+                              {user.schoolId ? `ID: ${user.schoolId}` : user.id.slice(0, 8)}
+                              {user.email ? ` · ${user.email}` : ""}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </Table.Cell>
+                      </Table.Cell>
 
-                    <Table.Cell className="py-3 px-4">
-                      {user.isActive ? (
-                        <Chip className="text-[11px]" color="success" size="sm" variant="soft">
-                          Active
-                        </Chip>
-                      ) : (
-                        <Chip className="text-[11px]" color="danger" size="sm" variant="soft">
-                          Inactive
-                        </Chip>
-                      )}
-                    </Table.Cell>
-
-                    <Table.Cell className="py-3 px-4">
-                      <div className="flex flex-wrap items-center gap-1.5 max-w-sm">
-                        {user.isSuperuser && (
-                          <Chip className="text-[10px] font-semibold" color="danger" size="sm" variant="soft">
-                            <ShieldAlert className="mr-1 inline" size={10} />
-                            SUPERUSER
+                      <Table.Cell className="py-3 px-4">
+                        {user.isActive ? (
+                          <Chip className="text-[11px]" color="success" size="sm" variant="soft">
+                            Active
+                          </Chip>
+                        ) : (
+                          <Chip className="text-[11px]" color="danger" size="sm" variant="soft">
+                            Inactive
                           </Chip>
                         )}
-                        {user.isStaff && !user.isSuperuser && (
-                          <Chip className="text-[10px] font-semibold" color="accent" size="sm" variant="soft">
-                            STAFF
-                          </Chip>
-                        )}
-                        {user.groups.map((group) => (
-                          <Chip key={group.id} className="text-[10px]" color="default" size="sm" variant="soft">
-                            {group.name}
-                          </Chip>
-                        ))}
-                        {!user.isSuperuser && user.groups.length === 0 && (
-                          <span className="text-xs text-muted italic">No groups</span>
-                        )}
-                      </div>
-                    </Table.Cell>
+                      </Table.Cell>
 
-                    <Table.Cell className="py-3 px-4 text-end">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          aria-label={`Manage groups for ${user.displayName}`}
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleOpenGroups(user)}
-                        >
-                          <Users className="mr-1 inline" size={14} />
-                          Groups
-                        </Button>
-                        <Button
-                          aria-label={`Edit ${user.displayName}`}
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleOpenEdit(user)}
-                        >
-                          <Edit2 className="mr-1 inline" size={14} />
-                          Edit
-                        </Button>
-                      </div>
-                    </Table.Cell>
-                  </Table.Row>
-                )}
-              </Table.Body>
-            </Table.Content>
-          </Table.ScrollContainer>
-        </Table>
+                      <Table.Cell className="py-3 px-4">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-md">
+                          {user.isSuperuser && (
+                            <Chip className="text-[10px] font-semibold" color="danger" size="sm" variant="soft">
+                              <ShieldAlert className="mr-1 inline" size={10} />
+                              SUPERUSER
+                            </Chip>
+                          )}
+                          {user.isStaff && !user.isSuperuser && (
+                            <Chip className="text-[10px] font-semibold" color="accent" size="sm" variant="soft">
+                              STAFF
+                            </Chip>
+                          )}
+                          {user.groups.map((group) => (
+                            <Chip key={group.id} className="text-[10px]" color="default" size="sm" variant="soft">
+                              {group.name}
+                            </Chip>
+                          ))}
+                          {(user.organizations ?? []).map((org) => (
+                            <Chip
+                              key={org.id}
+                              className="text-[10px]"
+                              color="accent"
+                              size="sm"
+                              variant="soft"
+                            >
+                              <Building2 className="mr-1 inline" size={10} />
+                              {org.acronym}
+                              {org.position ? ` · ${org.position}` : ""}
+                            </Chip>
+                          ))}
+                          {!user.isSuperuser &&
+                          user.groups.length === 0 &&
+                          (user.organizations ?? []).length === 0 ? (
+                            <span className="text-xs text-muted italic">No groups</span>
+                          ) : null}
+                        </div>
+                      </Table.Cell>
 
-        {filteredUsers.length === 0 && (
-          <div className="p-10 text-center">
-            <p className="text-sm text-muted">No users found matching your search or filters.</p>
-          </div>
+                      <Table.Cell className="py-3 px-4 text-end">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            aria-label={`Manage groups for ${user.displayName}`}
+                            size="sm"
+                            variant="ghost"
+                            onPress={() => handleOpenGroups(user)}
+                          >
+                            <Users className="mr-1 inline" size={14} />
+                            Groups
+                          </Button>
+                          <Button
+                            aria-label={`Edit ${user.displayName}`}
+                            size="sm"
+                            variant="secondary"
+                            onPress={() => handleOpenEdit(user)}
+                          >
+                            <Edit2 className="mr-1 inline" size={14} />
+                            Edit
+                          </Button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  )}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
+        ) : (
+          <EmptyState className="flex flex-col items-center text-center gap-2 p-10">
+            <Users className="text-muted size-8" />
+            <p className="text-sm font-semibold text-foreground">
+              No Matching Users
+            </p>
+            <p className="text-xs text-muted max-w-sm">
+              No campus accounts matched your search query or group/status filters.
+            </p>
+          </EmptyState>
         )}
       </Card>
 

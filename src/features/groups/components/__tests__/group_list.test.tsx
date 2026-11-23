@@ -2,7 +2,7 @@ import type { Permission } from "@/types";
 import type { AdminGroupListItem } from "@/features/groups/types";
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import { GroupList } from "../group_list";
 
@@ -51,11 +51,16 @@ describe("<GroupList />", () => {
     expect(screen.getByText("Create Group")).toBeInTheDocument();
   });
 
-  it("renders 'System Group' lock badge for protected system groups and hides delete", () => {
+  it("renders 'System Group' lock badge for protected system groups and opens HeroUI AlertDialog on delete", () => {
     render(<GroupList allPermissions={mockPermissions} groups={mockGroups} />);
 
     expect(screen.getByText("System Group")).toBeInTheDocument();
     expect(screen.queryByLabelText("Delete Students")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Delete Campus Security")).toBeInTheDocument();
+
+    const deleteBtn = screen.getByLabelText("Delete Campus Security");
+
+    expect(deleteBtn).toBeInTheDocument();
+    fireEvent.click(deleteBtn);
+    expect(screen.getByText("Delete Dynamic Group?")).toBeInTheDocument();
   });
 });

@@ -1,12 +1,16 @@
 // Browser-side mutation services for Event Proposals (FR-03, FR-04, FR-08).
+import type { EventAttachment, ServiceResult } from "@/types";
 import type { ProposalFormData } from "../types";
-import type { ServiceResult } from "@/types";
 
 import { createClient } from "@/utils/supabase/client";
+import {
+  deleteEventAttachmentFile,
+  uploadEventAttachmentFile,
+} from "@/utils/supabase/event_attachments";
 
 /**
  * Validate proposal form business rules (FR-04):
- * - Title, purpose, activities must not be empty.
+ * - Title, activity type, and rationale must not be empty.
  * - Capacity must be positive.
  * - Start time must precede end time.
  * - Registration deadline must not exceed start time.
@@ -18,14 +22,14 @@ export function validateProposalForm(data: ProposalFormData): { isValid: boolean
   if (!data.organizationId) {
     return { isValid: false, error: "Please select an organizing student group." };
   }
+  if (!data.activityType?.trim()) {
+    return { isValid: false, error: "Please select an activity type." };
+  }
   if (!data.venueId) {
     return { isValid: false, error: "Please select a target campus venue." };
   }
   if (!data.purpose?.trim()) {
-    return { isValid: false, error: "Event purpose is required." };
-  }
-  if (!data.activitiesDesc?.trim()) {
-    return { isValid: false, error: "Description of activities is required." };
+    return { isValid: false, error: "Event rationale is required." };
   }
   if (!data.capacity || data.capacity <= 0) {
     return { isValid: false, error: "Participant capacity must be greater than zero." };
@@ -54,12 +58,48 @@ export function validateProposalForm(data: ProposalFormData): { isValid: boolean
   return { isValid: true };
 }
 
+async function verifyRequiredAttachmentsPresent(
+  supabase: ReturnType<typeof createClient>,
+  proposalId: string,
+): Promise<string | null> {
+  const [{ data: requiredTypes }, { data: uploadedAttachments }] = await Promise.all([
+    supabase
+      .from("attachment_types")
+      .select("id, name")
+      .eq("is_active", true)
+      .eq("is_required", true),
+    supabase
+      .from("event_attachments")
+      .select("id, attachment_type_id")
+      .eq("proposal_id", proposalId),
+  ]);
+
+  if (!requiredTypes || requiredTypes.length === 0) {
+    return null;
+  }
+
+  const uploadedTypeIds = new Set(
+    (uploadedAttachments ?? [])
+      .map((a) => a.attachment_type_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const missing = requiredTypes.filter((t) => !uploadedTypeIds.has(t.id));
+
+  if (missing.length > 0) {
+    return `Missing required attachment${missing.length === 1 ? "" : "s"}: ${missing.map((m) => m.name).join(", ")}.`;
+  }
+
+  return null;
+}
+
 /**
  * Save proposal as draft (FR-03).
  */
 export async function saveDraft(
   data: ProposalFormData,
-  proposalId?: string
+  proposalId?: string,
+  preserveStatus?: string,
 ): Promise<ServiceResult<string>> {
   const supabase = createClient();
   const { data: userAuth } = await supabase.auth.getUser();
@@ -68,17 +108,24 @@ export async function saveDraft(
     return { success: false, data: null, error: { message: "Authentication required" } };
   }
 
+  const keepReturnedStatus =
+    Boolean(proposalId) &&
+    (preserveStatus === "returned_by_adviser" ||
+      preserveStatus === "returned_by_student_affairs");
+
   const payload = {
     title: data.title.trim() || "Untitled Proposal",
     organization_id: data.organizationId,
-    purpose: data.purpose.trim() || "No purpose specified yet",
-    activities_desc: data.activitiesDesc.trim() || "No activities specified yet",
+    purpose: data.purpose.trim() || "No rationale specified yet",
+    activities_desc: data.activitiesDesc?.trim() ?? "",
+    activity_type: data.activityType?.trim() || "seminar",
+    semester_id: data.semesterId || null,
     venue_id: data.venueId,
     start_time: data.startTime,
     end_time: data.endTime,
     registration_deadline: data.registrationDeadline,
     capacity: data.capacity || 50,
-    status: "draft",
+    status: keepReturnedStatus ? preserveStatus : "draft",
     updated_at: new Date().toISOString(),
   };
 
@@ -112,6 +159,52 @@ export async function saveDraft(
 }
 
 /**
+ * Upload an attachment for an event proposal.
+ */
+export async function uploadProposalAttachment(params: {
+  proposalId: string;
+  attachmentTypeId: string | null;
+  attachmentTypeName?: string | null;
+  attachmentTypeCode?: string | null;
+  attachmentTypeCategory?: string | null;
+  file: File;
+}): Promise<ServiceResult<EventAttachment>> {
+  const supabase = createClient();
+  const { data: userAuth } = await supabase.auth.getUser();
+
+  if (!userAuth.user) {
+    return { success: false, data: null, error: { message: "Authentication required" } };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, display_name")
+    .eq("id", userAuth.user.id)
+    .maybeSingle();
+
+  const uploadedByName =
+    profile?.full_name || profile?.display_name || userAuth.user.email || null;
+
+  return uploadEventAttachmentFile(supabase, {
+    ...params,
+    uploadedBy: userAuth.user.id,
+    uploadedByName,
+  });
+}
+
+/**
+ * Delete an uploaded attachment from an event proposal.
+ */
+export async function removeProposalAttachment(
+  attachmentId: string,
+  filePath: string,
+): Promise<ServiceResult<void>> {
+  const supabase = createClient();
+
+  return deleteEventAttachmentFile(supabase, attachmentId, filePath);
+}
+
+/**
  * Submit proposal for faculty endorsement (FR-04).
  * Transitions status from 'draft' to 'pending_adviser'.
  */
@@ -134,7 +227,9 @@ export async function submitProposal(proposalId: string): Promise<ServiceResult<
     organizationId: prop.organization_id,
     venueId: prop.venue_id,
     purpose: prop.purpose,
-    activitiesDesc: prop.activities_desc,
+    activitiesDesc: prop.activities_desc ?? "",
+    activityType: prop.activity_type || "seminar",
+    semesterId: prop.semester_id ?? null,
     capacity: prop.capacity,
     startTime: prop.start_time,
     endTime: prop.end_time,
@@ -143,6 +238,12 @@ export async function submitProposal(proposalId: string): Promise<ServiceResult<
 
   if (!validation.isValid) {
     return { success: false, data: null, error: { message: validation.error ?? "Invalid proposal data" } };
+  }
+
+  const missingAttachmentError = await verifyRequiredAttachmentsPresent(supabase, proposalId);
+
+  if (missingAttachmentError) {
+    return { success: false, data: null, error: { message: missingAttachmentError } };
   }
 
   const { error } = await supabase
@@ -176,6 +277,12 @@ export async function resubmitProposal(
 
   const supabase = createClient();
 
+  const missingAttachmentError = await verifyRequiredAttachmentsPresent(supabase, proposalId);
+
+  if (missingAttachmentError) {
+    return { success: false, data: null, error: { message: missingAttachmentError } };
+  }
+
   const { error } = await supabase
     .from("event_proposals")
     .update({
@@ -183,7 +290,9 @@ export async function resubmitProposal(
       organization_id: data.organizationId,
       venue_id: data.venueId,
       purpose: data.purpose.trim(),
-      activities_desc: data.activitiesDesc.trim(),
+      activities_desc: data.activitiesDesc?.trim() ?? "",
+      activity_type: data.activityType?.trim() || "seminar",
+      semester_id: data.semesterId || null,
       capacity: data.capacity,
       start_time: data.startTime,
       end_time: data.endTime,
@@ -201,19 +310,31 @@ export async function resubmitProposal(
 }
 
 /**
- * Delete draft proposal.
+ * Delete draft proposal and clean up its uploaded storage objects.
  */
 export async function deleteDraft(proposalId: string): Promise<ServiceResult<void>> {
   const supabase = createClient();
 
+  const { data: attachments } = await supabase
+    .from("event_attachments")
+    .select("file_path")
+    .eq("proposal_id", proposalId);
+
   const { error } = await supabase
     .from("event_proposals")
     .delete()
-    .eq("id", proposalId)
-    .eq("status", "draft");
+    .eq("id", proposalId);
 
   if (error) {
     return { success: false, data: null, error: { message: error.message } };
+  }
+
+  const paths = (attachments ?? [])
+    .map((a) => a.file_path)
+    .filter((p): p is string => Boolean(p));
+
+  if (paths.length > 0) {
+    await supabase.storage.from("organap-assets").remove(paths);
   }
 
   return { success: true, data: undefined, error: null };

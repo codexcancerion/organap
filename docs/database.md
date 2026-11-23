@@ -160,6 +160,62 @@ Dynamic key-value settings making the platform institution-agnostic.
 | `updated_at` | `timestamptz` | NOT NULL, default `now()` | Last modification |
 | `updated_by` | `uuid` | FK → `profiles(id)` | User who updated setting |
 
+### 11. `public.semesters`
+Institutional academic terms and date ranges (`semesters.*` permissions; superadmin only by default).
+
+| Column | Type | Constraints / Defaults | Notes |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | Semester ID |
+| `name` | `text` | NOT NULL, unique (`lower(trim(name))`) | Term name (e.g. `1st Semester AY 2026–2027`) |
+| `description` | `text` | nullable | Optional notes on term schedule |
+| `start_date` | `date` | NOT NULL | Term start date |
+| `end_date` | `date` | NOT NULL, `check (end_date > start_date)` | Term end date |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` | Creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, default `now()` | Last update timestamp |
+
+### 12. `public.departments`
+Institutional schools and academic departments (`departments.*` permissions; superadmin only by default). One department may contain many programs (`1:N`).
+
+| Column | Type | Constraints / Defaults | Notes |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | Department ID |
+| `name` | `text` | NOT NULL, unique (`lower(trim(name))`) | Full department name |
+| `code` | `text` | NOT NULL, unique (`lower(trim(code))`) | Department acronym/code (e.g. `SAMCIS`) |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` | Creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, default `now()` | Last update timestamp |
+
+### 13. `public.programs`
+Academic degree programs (`programs.*` permissions; superadmin only by default). Each program belongs to exactly 1 parent department (`N:1`).
+
+| Column | Type | Constraints / Defaults | Notes |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` | Program ID |
+| `department_id` | `uuid` | NOT NULL, FK → `departments(id)` on delete restrict | Single parent department |
+| `name` | `text` | NOT NULL, unique (`lower(trim(name))`) | Full degree program name |
+| `code` | `text` | NOT NULL, unique (`lower(trim(code))`) | Program acronym/code (e.g. `BSCS`) |
+| `created_at` | `timestamptz` | NOT NULL, default `now()` | Creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, default `now()` | Last update timestamp |
+
+---
+
+### 14. `public.event_proposals`
+Core proposal and approved campus event entity (`activity_type`, optional `semester_id`, `venue_id`, `capacity`, `registration_deadline`, `status`, cancellation metadata).
+
+### 15. `public.proposal_reviews`
+Immutable audit trail recording every adviser and Student Affairs decision (`stage`, `decision`, `remarks`, `reviewer_id`, `created_at`).
+
+### 16. `public.attachment_types` & `public.event_attachments`
+Configurable institutional document categories (`is_required`, `is_active`, optional template URL) and uploaded file metadata linked to `organap-assets` Storage.
+
+### 17. `public.event_registrations`
+Student seat reservations (`proposal_id`, `student_id`, unique `qr_token`, `status` in `confirmed`, `withdrawn`, `attended`). Partial unique index `idx_unique_active_registration` enforces at most one active (`confirmed` or `attended`) registration per `(proposal_id, student_id)`.
+
+### 18. `public.attendance_records`
+Verified entrance check-ins (`proposal_id`, `student_id`, `registration_id`, `verified_by`, `check_in_method` in `manual` or `qr_scanner`, `check_in_at`). Unique constraint `uq_attendance_student_event` prevents duplicate check-ins per `(proposal_id, student_id)`.
+
+### 19. `public.notifications`
+Per-user in-app notifications (`user_id`, `title`, `message`, `link`, `is_read`, `created_at`) isolated by `notifications_user_isolated` RLS policy.
+
 ---
 
 ## Security Helper Functions (Security Definer)
@@ -170,5 +226,19 @@ Dynamic key-value settings making the platform institution-agnostic.
 - `public.has_any_perm(p_codes text[], p_user_id uuid default auth.uid()) -> boolean`: Evaluates whether user holds at least one permission in array.
 - `public.get_user_permissions(p_user_id uuid default auth.uid()) -> table(permission_code text)`: Returns effective permissions table.
 - `public.get_user_groups(p_user_id uuid default auth.uid()) -> table(group_id uuid, group_name text)`: Returns active user group memberships.
-- `public.is_org_officer(p_org_id uuid, p_user_id uuid default auth.uid()) -> boolean`: Checks if user is an officer of the specified organization or has global permissions.
+- `public.is_org_officer(p_org_id uuid, p_user_id uuid default auth.uid()) -> boolean`: Checks if user is governor or officer of the specified organization or has global permissions.
 - `public.is_org_adviser(p_org_id uuid, p_user_id uuid default auth.uid()) -> boolean`: Checks if user is assigned as adviser for the specified organization.
+- `public.is_org_member(p_org_id uuid, p_user_id uuid default auth.uid()) -> boolean`: Checks active organization membership for collaborative proposal drafting.
+
+---
+
+## Workflow Stored Procedures & Triggers
+
+- `public.check_venue_conflict(p_venue_id, p_start_time, p_end_time, p_exclude_proposal_id)`: Evaluates interval intersection across `approved` events.
+- `public.approve_event_proposal(p_proposal_id, p_reviewer_id, p_remarks)`: Locks proposal and venue rows (`FOR UPDATE`), checks venue overlap, transitions to `approved`, writes `proposal_reviews`, and notifies creator at `/events/<id>`.
+- `public.cancel_approved_event(p_proposal_id, p_cancelled_by, p_reason)`: Cancels upcoming approved event, preserves records, releases venue, and notifies registrants and officer.
+- `public.register_for_event(p_proposal_id, p_student_id)`: Verifies caller identity, locks proposal row, validates deadline and capacity across `confirmed` and `attended` rows, generates 32-char token via `extensions.gen_random_bytes(16)`, inserts registration, and notifies student.
+- `public.withdraw_from_event(p_registration_id, p_student_id)`: Verifies caller identity, ensures `confirmed` state and open deadline on an approved event, and transitions to `withdrawn` to release the seat.
+- `public.record_attendance_entry(p_proposal_id, p_token_or_student_id, p_verified_by, p_method)`: Verifies caller identity and organization officer/staff authority, enforces `[start_time - 30 min, end_time]`, normalizes full QR tokens, 16-char hyphenated passcodes, UUIDs, or school IDs, rejects withdrawn/wrong-event/duplicate attempts, inserts `attendance_records`, and sets registration status to `attended`.
+- `public.get_event_registration_counts(p_proposal_ids uuid[])`: Privacy-safe aggregate count query returning active (`confirmed` + `attended`) totals per event.
+- `public.trg_notify_proposal_workflow()`: `AFTER UPDATE OF status` trigger on `event_proposals` dispatching notifications for `pending_adviser`, `pending_student_affairs`, `returned_*`, and `rejected_*` transitions with `/events/<id>?view=review` links.

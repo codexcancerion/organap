@@ -29,8 +29,8 @@ export const siteConfig = {
   ],
   navMenuItems: [
     { label: "Dashboard", href: "/dashboard" },
-    { label: "Proposals", href: "/proposals" },
     { label: "Events", href: "/events" },
+    { label: "My Passes", href: "/registrations" },
     { label: "Organizations", href: "/organizations" },
     { label: "Attendance", href: "/attendance" },
     { label: "Profile", href: "/profile" },

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProposalDetail } from "../types";
+import type { ActivityType, ProposalDetail } from "../types";
 
 import React from "react";
 import NextLink from "next/link";
@@ -10,27 +10,35 @@ import {
   toast,
 } from "@heroui/react";
 import {
+  AlertTriangle,
+  Ban,
   Building2,
   Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Edit2,
-  Send,
+  CalendarRange,
   CheckCircle2,
-  RotateCcw,
-  XCircle,
+  Clock,
+  Edit2,
   FileText,
-  ArrowLeft,
-  Ban,
+  MapPin,
+  RotateCcw,
+  Send,
+  Tag,
+  Trash2,
+  Users,
+  XCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { Section } from "@/components/layout/section";
+import { ConfirmDeleteModal } from "@/components/ui/confirm_delete_modal";
+import { EventAttachmentsCard } from "@/components/ui/event_attachments_card";
+import { ProposalStatusChip } from "@/components/ui/proposal_status_chip";
+import { mergeEventRationale } from "@/utils/formatters";
 
-import { submitProposal } from "../services/proposal_services";
+import { ACTIVITY_TYPE_LABELS } from "../types";
+import { deleteDraft, submitProposal } from "../services/proposal_services";
 
-import { ProposalStatusChip } from "./proposal_status_chip";
 import { ProposalTimeline } from "./proposal_timeline";
 import { VenueConflictAlert } from "./venue_conflict_alert";
 import { ReviewDecisionModal, type ReviewAction } from "./review_decision_modal";
@@ -59,17 +67,50 @@ export function ProposalDetailView({
   const router = useRouter();
   const [modalAction, setModalAction] = React.useState<ReviewAction | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+
+  const isReturned =
+    proposal.status === "returned_by_adviser" ||
+    proposal.status === "returned_by_student_affairs";
+  const isRejected =
+    proposal.status === "rejected_by_adviser" ||
+    proposal.status === "rejected_by_student_affairs";
 
   const canEdit =
-    (proposal.status === "draft" ||
-      proposal.status === "returned_by_adviser" ||
-      proposal.status === "returned_by_student_affairs") &&
+    (proposal.status === "draft" || isReturned) &&
     (isAuthorOrOfficer || isSuperuser);
 
-  const canSubmitDraft = proposal.status === "draft" && (isAuthorOrOfficer || isSuperuser);
+  const canSubmitOrResubmit = canEdit;
+  const canDeleteDraft =
+    proposal.status === "draft" && (isAuthorOrOfficer || isSuperuser);
 
   const isPendingAdviser = proposal.status === "pending_adviser" && (canEndorse || isSuperuser);
   const isPendingSA = proposal.status === "pending_student_affairs" && (canApprove || isStaff || isSuperuser);
+
+  const latestFeedbackReview = React.useMemo(() => {
+    if (!isReturned && !isRejected) return null;
+
+    const targetDecision = isReturned ? "returned_for_revision" : "rejected";
+    const matching = proposal.reviews.filter((r) => r.decision === targetDecision);
+
+    return matching[matching.length - 1] ?? proposal.reviews[proposal.reviews.length - 1] ?? null;
+  }, [isReturned, isRejected, proposal.reviews]);
+
+  const contributors = React.useMemo(() => {
+    const names = new Set<string>();
+
+    if (proposal.creatorName) {
+      names.add(proposal.creatorName);
+    }
+
+    for (const att of proposal.attachments) {
+      if (att.uploadedByName) {
+        names.add(att.uploadedByName);
+      }
+    }
+
+    return Array.from(names);
+  }, [proposal.creatorName, proposal.attachments]);
 
   const handleSubmitDraft = async () => {
     setIsSubmitting(true);
@@ -82,7 +123,11 @@ export function ProposalDetailView({
         return;
       }
 
-      toast.success("Proposal submitted for faculty adviser review.");
+      toast.success(
+        isReturned
+          ? "Revised proposal resubmitted for faculty adviser review."
+          : "Proposal submitted for faculty adviser review.",
+      );
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An error occurred";
@@ -93,38 +138,70 @@ export function ProposalDetailView({
     }
   };
 
+  const handleDeleteDraft = async () => {
+    const res = await deleteDraft(proposal.id);
+
+    if (!res.success) {
+      toast.danger(res.error?.message ?? "Failed to delete draft");
+
+      return;
+    }
+
+    toast.success("Proposal draft deleted.");
+    setIsDeleteModalOpen(false);
+    router.push("/events");
+    router.refresh();
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      <NextLink
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors w-fit"
-        href="/proposals"
-      >
-        <ArrowLeft size={14} />
-        Back to Event Proposals
-      </NextLink>
-
       {/* Standard Cardless Page Header */}
       <PageHeader
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {proposal.status === "approved" ? (
+              <NextLink href={`/events/${proposal.id}`}>
+                <Button size="md" variant="secondary">
+                  Back to Public Event View
+                </Button>
+              </NextLink>
+            ) : null}
+
             {canEdit && (
-              <NextLink href={`/proposals/${proposal.id}/edit`}>
+              <NextLink href={`/events/${proposal.id}/edit`}>
                 <Button size="md" variant="secondary">
                   <Edit2 size={16} />
-                  Edit Proposal
+                  Edit &amp; Upload Attachments
                 </Button>
               </NextLink>
             )}
 
-            {canSubmitDraft && (
+            {canSubmitOrResubmit && (
               <Button
                 isDisabled={isSubmitting}
                 size="md"
                 variant="primary"
-                onClick={handleSubmitDraft}
+                onPress={handleSubmitDraft}
               >
                 <Send size={16} />
-                {isSubmitting ? "Submitting..." : "Submit to Adviser"}
+                {isSubmitting
+                  ? "Submitting..."
+                  : isReturned
+                    ? "Resubmit to Adviser"
+                    : "Submit to Adviser"}
+              </Button>
+            )}
+
+            {canDeleteDraft && (
+              <Button
+                className="text-danger hover:bg-danger/10"
+                isDisabled={isSubmitting}
+                size="md"
+                variant="ghost"
+                onPress={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2 size={16} />
+                Delete Draft
               </Button>
             )}
 
@@ -133,7 +210,7 @@ export function ProposalDetailView({
                 <Button
                   size="md"
                   variant="secondary"
-                  onClick={() => setModalAction("return")}
+                  onPress={() => setModalAction("return")}
                 >
                   <RotateCcw size={16} />
                   Return
@@ -142,7 +219,7 @@ export function ProposalDetailView({
                   className="bg-danger text-danger-foreground hover:bg-danger/90"
                   size="md"
                   variant="danger"
-                  onClick={() => setModalAction("reject")}
+                  onPress={() => setModalAction("reject")}
                 >
                   <XCircle size={16} />
                   Reject
@@ -150,7 +227,7 @@ export function ProposalDetailView({
                 <Button
                   size="md"
                   variant="primary"
-                  onClick={() => setModalAction("endorse")}
+                  onPress={() => setModalAction("endorse")}
                 >
                   <CheckCircle2 size={16} />
                   Endorse Proposal
@@ -163,7 +240,7 @@ export function ProposalDetailView({
                 <Button
                   size="md"
                   variant="secondary"
-                  onClick={() => setModalAction("return")}
+                  onPress={() => setModalAction("return")}
                 >
                   <RotateCcw size={16} />
                   Return
@@ -172,7 +249,7 @@ export function ProposalDetailView({
                   className="bg-danger text-danger-foreground hover:bg-danger/90"
                   size="md"
                   variant="danger"
-                  onClick={() => setModalAction("reject")}
+                  onPress={() => setModalAction("reject")}
                 >
                   <XCircle size={16} />
                   Reject
@@ -181,7 +258,7 @@ export function ProposalDetailView({
                   isDisabled={hasConflict}
                   size="md"
                   variant="primary"
-                  onClick={() => setModalAction("approve")}
+                  onPress={() => setModalAction("approve")}
                 >
                   <CheckCircle2 size={16} />
                   Approve Event
@@ -191,9 +268,68 @@ export function ProposalDetailView({
           </div>
         }
         badge={<ProposalStatusChip status={proposal.status} />}
+        breadcrumbs={[
+          { label: "Back to Events & Proposals", href: "/events" },
+          { label: proposal.title },
+        ]}
         description={`Submitted by ${proposal.creatorName ?? "Officer"} on ${new Date(proposal.createdAt).toLocaleDateString()}`}
         title={proposal.title}
       />
+
+      {/* Revision Requested or Rejection Feedback Banner */}
+      {(isReturned || isRejected) && (
+        <Card
+          className={`p-5 flex flex-col gap-2.5 border ${
+            isReturned
+              ? "border-warning/40 bg-warning/10"
+              : "border-danger/30 bg-danger/10"
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div
+              className={`flex items-center gap-2 font-semibold text-sm ${
+                isReturned ? "text-warning" : "text-danger"
+              }`}
+            >
+              {isReturned ? <AlertTriangle size={16} /> : <XCircle size={16} />}
+              <span>
+                {isReturned
+                  ? proposal.status === "returned_by_adviser"
+                    ? "Revision Requested by Faculty Adviser"
+                    : "Revision Requested by Student Affairs"
+                  : proposal.status === "rejected_by_adviser"
+                    ? "Proposal Rejected by Faculty Adviser"
+                    : "Proposal Rejected by Student Affairs"}
+              </span>
+            </div>
+
+            {isReturned && canEdit ? (
+              <NextLink href={`/events/${proposal.id}/edit`}>
+                <Button size="sm" variant="secondary">
+                  <Edit2 size={14} />
+                  Revise &amp; Upload Attachments
+                </Button>
+              </NextLink>
+            ) : null}
+          </div>
+
+          {latestFeedbackReview ? (
+            <div className="flex flex-col gap-1 text-xs text-foreground/90">
+              <p className="text-[11px] text-muted">
+                Reviewed by <strong>{latestFeedbackReview.reviewerName}</strong> on{" "}
+                {new Date(latestFeedbackReview.createdAt).toLocaleString()}
+              </p>
+              <p className="whitespace-pre-wrap leading-relaxed">
+                {latestFeedbackReview.remarks || "No specific remarks recorded."}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted">
+              Check the review timeline below for reviewer details.
+            </p>
+          )}
+        </Card>
+      )}
 
       {/* Venue Conflict Warning Banner if Pending SA */}
       {proposal.status === "pending_student_affairs" && (
@@ -215,36 +351,31 @@ export function ProposalDetailView({
 
       {/* Main Details Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column: Event Purpose & Activities */}
+        {/* Left Column: Event Rationale, Attachments & Timeline */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card className="border border-border/30 bg-surface p-6 gap-4">
             <div className="flex items-center gap-2 border-b border-border/20 pb-3">
               <FileText className="text-primary size-5" />
-              <h2 className="text-base font-bold text-foreground">Event Purpose & Justification</h2>
+              <h2 className="text-base font-bold text-foreground">Event Rationale &amp; Description</h2>
             </div>
             <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-              {proposal.purpose}
+              {mergeEventRationale(proposal.purpose, proposal.activitiesDesc)}
             </p>
           </Card>
 
-          <Card className="border border-border/30 bg-surface p-6 gap-4">
-            <div className="flex items-center gap-2 border-b border-border/20 pb-3">
-              <Calendar className="text-primary size-5" />
-              <h2 className="text-base font-bold text-foreground">Program & Activities Sequence</h2>
-            </div>
-            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-              {proposal.activitiesDesc}
-            </p>
-          </Card>
+          <EventAttachmentsCard
+            attachments={proposal.attachments}
+            emptyMessage="No attachments uploaded for this proposal."
+          />
 
           {/* Timeline Audit History (FR-09) */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Clock className="text-accent" size={16} />
-              <span>Review & Endorsement Timeline</span>
-            </h3>
+          <Section
+            as="h3"
+            icon={<Clock className="text-accent" size={16} />}
+            title="Review & Endorsement Timeline"
+          >
             <ProposalTimeline reviews={proposal.reviews} />
-          </div>
+          </Section>
         </div>
 
         {/* Right Column: Event Specifications & Metadata */}
@@ -260,6 +391,40 @@ export function ProposalDetailView({
                 <div>
                   <p className="font-semibold text-foreground">{proposal.organizationName}</p>
                   <p className="text-muted text-[11px]">{proposal.organizationAcronym} · Host Organization</p>
+                </div>
+              </div>
+
+              {contributors.length > 0 ? (
+                <div className="flex items-start gap-3">
+                  <Users className="text-primary size-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {contributors.join(", ")}
+                    </p>
+                    <p className="text-muted text-[11px]">
+                      Contributors ({contributors.length})
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex items-start gap-3">
+                <Tag className="text-primary size-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {ACTIVITY_TYPE_LABELS[proposal.activityType as ActivityType] ?? proposal.activityType ?? "Seminar / Conference"}
+                  </p>
+                  <p className="text-muted text-[11px]">Activity Type</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CalendarRange className="text-primary size-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {proposal.semesterName ?? "Not assigned"}
+                  </p>
+                  <p className="text-muted text-[11px]">Academic Semester</p>
                 </div>
               </div>
 
@@ -315,6 +480,23 @@ export function ProposalDetailView({
           proposalTitle={proposal.title}
           stage={isPendingAdviser ? "adviser" : "student_affairs"}
           onOpenChange={(open) => !open && setModalAction(null)}
+        />
+      )}
+
+      {/* Draft Deletion Confirmation */}
+      {canDeleteDraft && (
+        <ConfirmDeleteModal
+          confirmLabel="Delete Draft"
+          description={
+            <>
+              Are you sure you want to permanently delete the draft{" "}
+              <strong>{proposal.title}</strong> and its uploaded attachments?
+            </>
+          }
+          isOpen={isDeleteModalOpen}
+          title="Delete Event Draft"
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteDraft}
         />
       )}
     </div>

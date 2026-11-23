@@ -7,7 +7,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <NextLink
       className={clsx(
-        "flex items-center gap-2.5 font-bold tracking-tight text-lg text-foreground hover:opacity-90 transition-opacity",
+        "flex items-center gap-2.5 text-lg text-foreground hover:opacity-90 transition-opacity",
         className,
       )}
       href="/"
@@ -15,9 +15,9 @@ export function Logo({ className }: { className?: string }) {
       <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-accent text-accent-foreground shadow-sm">
         <CalendarCheck2 size={18} />
       </div>
-      <span className="flex items-baseline">
-        <span className="text-foreground">Or</span>
-        <span className="text-accent">Ganap</span>
+      <span className="flex items-baseline font-logo font-normal uppercase tracking-wide leading-none text-xl">
+        <span className="text-foreground">OR</span>
+        <span className="text-accent">GANAP</span>
       </span>
     </NextLink>
   );

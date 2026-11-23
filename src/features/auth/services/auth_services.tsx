@@ -1,4 +1,5 @@
 // Browser-side Supabase auth calls for OrGanap (Django-style RBAC).
+import type { ServiceResult } from "@/types";
 import type {
   AuthError,
   AuthResult,
@@ -11,6 +12,9 @@ import type {
 } from "@/features/auth/types";
 
 import { createClient } from "@/utils/supabase/client";
+import { mapSupabaseMutationError } from "@/utils/supabase/errors";
+
+const ASSET_BUCKET = "organap-assets";
 
 function toAuthError(err: { message: string; code?: string } | null): AuthError | null {
   if (!err) return null;
@@ -175,7 +179,7 @@ export async function requestPasswordReset(
   return toAuthError(error);
 }
 
-/** Update the user's password once signed in via reset link. */
+/** Update the user's password once signed in. */
 export async function updateUserPassword(
   newPassword: string,
 ): Promise<AuthError | null> {
@@ -185,6 +189,56 @@ export async function updateUserPassword(
   });
 
   return toAuthError(error);
+}
+
+/**
+ * Upload a compressed profile avatar Blob into `organap-assets/avatars/<user_id>/...`.
+ */
+export async function uploadProfileAvatar(
+  blob: Blob,
+): Promise<ServiceResult<{ publicUrl: string }>> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      success: false,
+      data: null,
+      error: { message: "Authentication required." },
+    };
+  }
+
+  const ext = blob.type === "image/png" ? "png" : blob.type === "image/jpeg" ? "jpg" : "webp";
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  const filePath = `avatars/${user.id}/avatar-${Date.now()}-${randomSuffix}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(ASSET_BUCKET)
+    .upload(filePath, blob, {
+      contentType: blob.type || "image/webp",
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    return {
+      success: false,
+      data: null,
+      error: { message: uploadError.message },
+    };
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(ASSET_BUCKET)
+    .getPublicUrl(filePath);
+
+  return {
+    success: true,
+    data: { publicUrl: publicUrlData.publicUrl },
+    error: null,
+  };
 }
 
 /** Update user profile (display name, avatar, school ID). */
@@ -204,9 +258,12 @@ export async function updateProfile(
     display_name?: string;
     school_id?: string | null;
     avatar_url?: string | null;
+    updated_at: string;
   };
 
-  const patch: ProfileUpdate = {};
+  const patch: ProfileUpdate = {
+    updated_at: new Date().toISOString(),
+  };
 
   if (input.displayName !== undefined && input.displayName !== null) {
     patch.display_name = input.displayName;
@@ -219,5 +276,13 @@ export async function updateProfile(
     .update(patch)
     .eq("id", user.id);
 
-  return toAuthError(error);
+  if (!error) return null;
+
+  return {
+    code: error.code,
+    message: mapSupabaseMutationError(error, {
+      entityLabel: "your profile",
+      uniqueMessage: "That School / Student ID is already assigned to another account.",
+    }),
+  };
 }

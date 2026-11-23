@@ -1,8 +1,12 @@
 export type AttendanceEventItem = {
   id: string;
   title: string;
+  organizationId: string;
   organizationName: string;
   organizationAcronym: string;
+  organizationLogoUrl: string | null;
+  status: string;
+  registrationDeadline: string;
   venueName: string;
   startTime: string;
   endTime: string;
@@ -18,6 +22,8 @@ export type AttendanceRosterItem = {
   studentId: string;
   schoolId: string;
   fullName: string;
+  email?: string;
+  registeredAt?: string;
   qrToken: string;
   status: "confirmed" | "attended";
   checkInAt: string | null;

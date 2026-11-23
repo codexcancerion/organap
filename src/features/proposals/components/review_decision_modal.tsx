@@ -112,72 +112,77 @@ export function ReviewDecisionModal({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Dialog className="border border-border/40 shadow-xl bg-surface max-w-lg">
-        <Modal.Header className="flex items-center gap-2">
-          {action === "endorse" && <CheckCircle2 className="text-warning size-5" />}
-          {action === "approve" && <CheckCircle2 className="text-success size-5" />}
-          {action === "return" && <RotateCcw className="text-warning size-5" />}
-          {action === "reject" && <XCircle className="text-danger size-5" />}
-          <Modal.Heading className="text-lg font-bold">
-            {actionTitle}
-          </Modal.Heading>
-        </Modal.Header>
+      <Modal.Backdrop variant="blur">
+        <Modal.Container scroll="inside" size="md">
+          <Modal.Dialog className="border border-border/40 shadow-xl bg-surface">
+            <Modal.CloseTrigger />
+            <Modal.Header className="flex items-center gap-2">
+              {action === "endorse" && <CheckCircle2 className="text-warning size-5" />}
+              {action === "approve" && <CheckCircle2 className="text-success size-5" />}
+              {action === "return" && <RotateCcw className="text-warning size-5" />}
+              {action === "reject" && <XCircle className="text-danger size-5" />}
+              <Modal.Heading className="text-lg font-bold">
+                {actionTitle}
+              </Modal.Heading>
+            </Modal.Header>
 
-        <Modal.Body className="flex flex-col gap-3 py-2">
-          <p className="text-xs text-muted">
-            You are reviewing: <strong>{proposalTitle}</strong>
-          </p>
+            <Modal.Body className="flex flex-col gap-3 py-2">
+              <p className="text-xs text-muted">
+                You are reviewing: <strong>{proposalTitle}</strong>
+              </p>
 
-          {isPositive ? (
-            <p className="text-xs text-muted">
-              {action === "endorse"
-                ? "Endorsing this proposal indicates that you have vetted the event objectives and endorse its submission to Student Affairs for venue reservation and final approval."
-                : "Approving this proposal will officially reserve the venue, publish the event to the campus directory, and open student registration."}
-            </p>
-          ) : (
-            <p className="text-xs text-muted">
-              {isReturn
-                ? "Please specify the amendments, documentation, or schedule changes required before the organization may resubmit."
-                : "Please state the institutional justification for rejecting this event proposal."}
-            </p>
-          )}
+              {isPositive ? (
+                <p className="text-xs text-muted">
+                  {action === "endorse"
+                    ? "Endorsing this proposal indicates that you have vetted the event objectives and endorse its submission to Student Affairs for venue reservation and final approval."
+                    : "Approving this proposal will officially reserve the venue, publish the event to the campus directory, and open student registration."}
+                </p>
+              ) : (
+                <p className="text-xs text-muted">
+                  {isReturn
+                    ? "Please specify the amendments, documentation, or schedule changes required before the organization may resubmit."
+                    : "Please state the institutional justification for rejecting this event proposal."}
+                </p>
+              )}
 
-          <div className="flex flex-col gap-1.5 pt-2">
-            <label className="text-xs font-semibold text-foreground">
-              Official Review Remarks {requiresRemarks && <span className="text-danger">*</span>}
-            </label>
-            <TextArea
-              aria-label="Official review remarks"
-              className="w-full text-xs"
-              placeholder={requiresRemarks ? "Enter required feedback or instructions..." : "Optional reviewer notes..."}
-              rows={4}
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-            />
-          </div>
-        </Modal.Body>
+              <div className="flex flex-col gap-1.5 pt-2">
+                <label className="text-xs font-semibold text-foreground">
+                  Official Review Remarks {requiresRemarks && <span className="text-danger">*</span>}
+                </label>
+                <TextArea
+                  aria-label="Official review remarks"
+                  className="w-full text-xs"
+                  placeholder={requiresRemarks ? "Enter required feedback or instructions..." : "Optional reviewer notes..."}
+                  rows={4}
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                />
+              </div>
+            </Modal.Body>
 
-        <Modal.Footer className="flex items-center justify-end gap-2 pt-3 border-t border-border/20">
-          <Button
-            isDisabled={isPending}
-            size="md"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
+            <Modal.Footer className="flex items-center justify-end gap-2 pt-3 border-t border-border/20">
+              <Button
+                isDisabled={isPending}
+                size="md"
+                variant="ghost"
+                onPress={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
 
-          <Button
-            className={action === "reject" ? "bg-danger text-danger-foreground" : ""}
-            isDisabled={isPending || (action === "approve" && hasConflict)}
-            size="md"
-            variant={action === "reject" ? "danger" : isPositive ? "primary" : "secondary"}
-            onClick={handleConfirm}
-          >
-            {isPending ? "Processing..." : actionTitle}
-          </Button>
-        </Modal.Footer>
-      </Modal.Dialog>
+              <Button
+                className={action === "reject" ? "bg-danger text-danger-foreground" : ""}
+                isDisabled={isPending || (action === "approve" && hasConflict)}
+                size="md"
+                variant={action === "reject" ? "danger" : isPositive ? "primary" : "secondary"}
+                onPress={handleConfirm}
+              >
+                {isPending ? "Processing..." : actionTitle}
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

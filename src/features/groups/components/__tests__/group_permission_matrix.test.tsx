@@ -16,6 +16,9 @@ const mockPermissions: Permission[] = [
   { id: "p1", code: "proposals.create", name: "Create Proposals", module: "proposals", description: "Can draft" },
   { id: "p2", code: "proposals.approve", name: "Approve Proposals", module: "proposals", description: "Can approve" },
   { id: "p3", code: "venues.view", name: "View Venues", module: "venues", description: "Can browse" },
+  { id: "p4", code: "semesters.view", name: "Can view semesters", module: "semesters", description: "Can view terms" },
+  { id: "p5", code: "departments.view", name: "Can view departments", module: "departments", description: "Can view depts" },
+  { id: "p6", code: "programs.view", name: "Can view programs", module: "programs", description: "Can view progs" },
 ];
 
 describe("<GroupPermissionMatrix />", () => {
@@ -29,9 +32,12 @@ describe("<GroupPermissionMatrix />", () => {
       />,
     );
 
-    expect(screen.getByText("1 of 3 permissions granted")).toBeInTheDocument();
+    expect(screen.getByText("1 of 6 permissions granted")).toBeInTheDocument();
     expect(screen.getByText("Event Proposals & Workflow")).toBeInTheDocument();
     expect(screen.getByText("Campus Venues")).toBeInTheDocument();
+    expect(screen.getByText("Academic Semesters")).toBeInTheDocument();
+    expect(screen.getByText("Academic Departments")).toBeInTheDocument();
+    expect(screen.getByText("Academic Programs")).toBeInTheDocument();
   });
 
   it("renders reset and save buttons in active editable mode", () => {

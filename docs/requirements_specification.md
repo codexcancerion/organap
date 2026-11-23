@@ -61,17 +61,17 @@ Advise on technical feasibility and support a possible future implementation.
 
 The proposed administrative arrangement assigns account access and organization assignments to designated Student Affairs personnel.
 
-A.3. Proposed Workflow
+A.3. Implemented Baseline Workflow
 
-An organization officer would prepare a draft proposal containing the event purpose, activities, venue, schedule, participant capacity, and registration deadline. After validation, submission would place the proposal in Pending Adviser Review.
+An organization officer or active organization member prepares a draft proposal containing the title, activity type, academic semester, rationale, activities, venue, schedule, participant capacity, registration deadline, and required institutional attachments. After validation, submission places the proposal in Pending Adviser Review and triggers a database notification for the assigned adviser.
 
-The assigned adviser could endorse the proposal, return it for revision, or reject it. An endorsed proposal would proceed to Pending Student Affairs Review. Student Affairs could approve it, return it for revision, or reject it. Final approval would require an available venue for the requested period.
+The assigned faculty adviser can endorse the proposal, return it for revision, or reject it with remarks. Endorsement notifies Student Affairs personnel and routes the proposal to Pending Student Affairs Review. Student Affairs can approve it, return it for revision, or reject it. Final approval locks the venue row in PostgreSQL, checks for venue overlap, transitions the status to Approved, and notifies the submitting officer.
 
-A returned proposal would remain editable by the submitting organization. Resubmission would restart adviser review so that both approving parties assess the revised version. Submitted and approved proposals would otherwise remain locked against direct editing.
+Returned proposals remain editable by any authorized organization member or officer. Resubmission restarts adviser review so both approving parties evaluate the revised submission while preserving chronological review history. Approved proposals cannot be edited directly.
 
-Approved events would appear in the event listing. Students could register before the deadline, subject to available capacity. During the scheduled event period, an authorized organization officer would verify a registered student's identity and record attendance. Attendance reports would then provide a consistent record of participation.
+Approved events appear alongside visible in-workflow proposals inside the unified Events explorer and Calendar grid. Active students can register before the deadline while capacity remains, immediately receiving an event-specific 32-character QR token and 16-character passcode pass in the My Event Passes view, or withdraw before the deadline via confirmation dialog. During the check-in window starting 30 minutes before the scheduled start until event end, authorized officers of the organizing group or Student Affairs staff record verified attendance via manual roster lookup or QR scanner and export RFC 4180 CSV audit reports directly from the unified Attendance Desk.
 
-The proposed statuses are Draft, Pending Adviser Review, Pending Student Affairs Review, Returned for Revision, Approved, Rejected, and Cancelled. Each review decision would retain the reviewer, date, time, and remarks.
+The implemented proposal and event statuses are Draft, Pending Adviser Review, Pending Student Affairs Review, Returned by Adviser, Returned by Student Affairs, Approved, Rejected by Adviser, Rejected by Student Affairs, and Cancelled. Public Privacy Policy (`/privacy`) and Terms of Service (`/terms`) pages document data governance and acceptable use.
 
 A.4. Scope and Boundaries
 
@@ -211,17 +211,17 @@ Must Have
 
 FR-02
 
-The system shall allow designated Student Affairs personnel to activate or deactivate accounts and assign approved roles and organization associations.
+The system shall allow designated Student Affairs personnel to activate or deactivate accounts, manage dynamic role groups and granular permissions, and assign organization associations.
 
-Other users cannot change account permissions or organizational assignments.
+Implemented via dynamic Django-style RBAC (`groups`, `permissions`, `group_permissions`, `user_groups`, `user_permissions`, `is_staff`, `is_superuser`) alongside organization rosters. Other users cannot alter permissions or institutional assignments.
 
 Must Have
 
 FR-03
 
-The system shall allow an organization officer to create and save a draft event proposal for the officer's assigned organization.
+The system shall allow an authorized organization member or officer to create and save a draft event proposal for the assigned organization.
 
-Draft fields include title, purpose, activities, venue, start and end times, capacity, and registration deadline.
+Draft fields include title, activity type, academic semester, rationale, activities, venue, start and end times, capacity, registration deadline, and file attachments (`event_attachments`).
 
 Must Have
 
@@ -229,7 +229,7 @@ FR-04
 
 The system shall validate a proposal before accepting its submission and routing it to the assigned adviser.
 
-Required fields must be complete, capacity must be positive, the start must be in the future, the end must follow the start, and the registration deadline must not exceed the start time. Valid submission sets the status to Pending Adviser Review.
+Required fields must be complete, required institutional `attachment_types` must be uploaded, capacity must be positive, start must precede end, and registration deadline must not exceed start time. Submission sets status to Pending Adviser Review.
 
 Must Have
 
@@ -259,7 +259,7 @@ Must Have
 
 FR-08
 
-The system shall allow the submitting organization officer to revise and resubmit a proposal marked Returned for Revision.
+The system shall allow the submitting organization to revise and resubmit a proposal marked Returned for Revision.
 
 Resubmission restarts adviser review and retains the previous submission and decision history.
 
@@ -269,23 +269,23 @@ FR-09
 
 The system shall display a proposal's current status and chronological review history to its submitting organization and authorized reviewers.
 
-The history includes each decision, reviewer, timestamp, and remarks.
+The history includes each decision, reviewer, timestamp, and remarks, accessible from the unified Events route (`/events/[id]?view=review`).
 
 Must Have
 
 FR-10
 
-The system shall allow active student users to view the details of approved events.
+The system shall allow active student users to view the details of approved events while excluding unapproved drafts from student listings.
 
-Details include the organizing group, purpose, activities, venue, schedule, capacity, and registration deadline. Unapproved proposals are excluded from student listings.
+Details include organizing group, activity type, semester, rationale, venue, schedule, capacity, registration deadline, and attachments. Officers, advisers, and Student Affairs see their visible proposals merged in the unified Events explorer.
 
 Must Have
 
 FR-11
 
-The system shall create in-application notifications for users affected by proposal submissions, review decisions, and event cancellations.
+The system shall create in-application notifications for users affected by proposal submissions, endorsements, returns, rejections, approvals, student registrations, and event cancellations.
 
-Reviewers receive pending-review notices, submitting officers receive decisions, and registered students receive cancellation notices.
+A database trigger and stored procedures dispatch alerts automatically, surfaced on `/notifications` and unread count badges in Sidebar and Navbar.
 
 Should Have
 
@@ -293,23 +293,23 @@ FR-12
 
 The system shall allow an active student to register for or withdraw from an approved event before its registration deadline.
 
-Registration requires an available place and no existing active registration for that student and event. Successful withdrawal releases the place.
+Registration requires available capacity and no active (`confirmed` or `attended`) registration. Withdrawal via confirmation dialog releases the seat and invalidates the old pass token. Checked-in registrations cannot be withdrawn.
 
 Must Have
 
 FR-13
 
-The system shall allow an authorized officer of the organizing group to record a verified registered student's attendance during the event's scheduled period.
+The system shall allow an authorized officer of the organizing group or Student Affairs staff to record a registered student's attendance during the check-in window.
 
-The event must remain approved. Each student may have only one attendance record per event, including a check-in timestamp.
+The check-in window opens 30 minutes before `start_time` and closes at `end_time`. The event must remain approved, cross-organization officers are blocked, and each student has at most one attendance record.
 
 Must Have
 
 FR-14
 
-The system shall generate and export an event attendance report for authorized organization officers and Student Affairs personnel.
+The system shall generate and export an event attendance report directly within the unified Attendance Desk for authorized organization officers and Student Affairs personnel.
 
-Reports include the event, registered students, recorded attendees, attendance timestamps, and totals. Officers may access only their organization's reports. CSV export must be available.
+The `/attendance/[id]` console displays registered vs attended counts, turnout rate, capacity utilization, check-in timestamps, and RFC 4180 UTF-8 BOM CSV export (`/reports/*` redirects to `/attendance/*`).
 
 Must Have
 
@@ -317,31 +317,31 @@ FR-15
 
 The system shall allow Student Affairs personnel to cancel an approved event before its scheduled start by providing a reason.
 
-Cancellation blocks registration and check-in, releases the venue reservation, and preserves existing records and the cancellation reason.
+Cancellation blocks registration and check-in, releases the venue reservation, preserves existing records and cancellation reason, and notifies registrants.
 
 Must Have
 
 FR-16
 
-The system shall display approved events in a calendar organized by date.
+The system shall display approved events and visible schedule entries in a calendar organized by date.
 
-Users can open an event's details from its calendar entry.
+Integrated as a view tab inside `/events` where users open event details directly from calendar entries.
 
 Should Have
 
 FR-17
 
-The system shall provide an event-specific QR code for each registration and allow an authorized organizing officer to use it for attendance recording.
+The system shall provide an event-specific QR pass and formatted passcode for each registration and allow authorized officers to verify attendance via scanner or manual entry.
 
-QR check-in must follow FR-13 and reject codes belonging to another event or an existing attendance record.
+Generates a 32-character hex token (`extensions.gen_random_bytes`) and 16-character hyphenated passcode (`XXXX-XXXX-XXXX-XXXX`), rejecting duplicate check-ins, withdrawn tokens, and passes from other events.
 
 Could Have
 
 FR-18
 
-The system shall display summary counts of approved events, registrations, and recorded attendees within the requesting user's permitted scope.
+The system shall display live role-scoped summary counts, action queues, and upcoming events on the Overview dashboard.
 
-Organization officers see their organization's counts; Student Affairs sees institutional counts.
+`/dashboard` displays role-adapted KPIs, organization-scoped or institutional registration and attendance totals, review queues, student passes, and upcoming approved events.
 
 Could Have
 

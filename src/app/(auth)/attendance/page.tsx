@@ -19,7 +19,23 @@ export default async function AttendancePage() {
     redirect("/login");
   }
 
-  const events = await getAttendanceEligibleEvents(user.id);
+  const canManageAttendance =
+    user.isSuperuser ||
+    user.isStaff ||
+    user.permissions.includes("attendance.verify") ||
+    user.permissions.includes("attendance.view") ||
+    user.permissions.includes("reports.view") ||
+    user.permissions.includes("reports.export");
+
+  if (!canManageAttendance) {
+    redirect("/events");
+  }
+
+  const events = await getAttendanceEligibleEvents({
+    id: user.id,
+    isStaff: user.isStaff,
+    isSuperuser: user.isSuperuser,
+  });
 
   return (
     <div className="flex flex-col gap-6 w-full">

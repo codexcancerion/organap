@@ -4,9 +4,10 @@ import Link from "next/link";
 import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
-import { fontSans, fontMono } from "@/config/fonts";
+import { fontSans, fontMono, fontLogo } from "@/config/fonts";
 import { Navbar } from "@/components/navigation/navbar";
 import { getCurrentUser } from "@/features/auth/services/auth_queries";
+import { getUnreadNotificationCount } from "@/features/notifications/services/notification_queries";
 import { CookieConsent } from "@/components/ui/cookie_consent";
 
 import { Providers } from "./providers";
@@ -46,19 +47,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+  const unreadCount = user ? await getUnreadNotificationCount(user.id) : 0;
 
   return (
-    <html suppressHydrationWarning lang="en">
-      <body
-        className={clsx(
-          "min-h-screen text-foreground bg-background font-sans antialiased",
-          fontSans.variable,
-          fontMono.variable,
-        )}
-      >
+    <html
+      suppressHydrationWarning
+      className={clsx(fontSans.variable, fontMono.variable, fontLogo.variable)}
+      lang="en"
+    >
+      <body className="min-h-screen text-foreground bg-background font-sans antialiased">
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col min-h-screen">
-            <Navbar user={user} />
+            <Navbar unreadCount={unreadCount} user={user} />
             <div className="flex-1">
               {children}
             </div>

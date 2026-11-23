@@ -59,12 +59,12 @@ export function EventCalendarView({ events }: { events: EventListItem[] }) {
             {monthName} {year}
           </h2>
           <Chip size="sm" variant="soft">
-            {events.length} Approved Events
+            {events.length} Scheduled
           </Chip>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={today}>
+          <Button size="sm" variant="secondary" onPress={today}>
             Today
           </Button>
           <div className="flex items-center gap-1">
@@ -72,7 +72,7 @@ export function EventCalendarView({ events }: { events: EventListItem[] }) {
               aria-label="Previous Month"
               size="sm"
               variant="ghost"
-              onClick={prevMonth}
+              onPress={prevMonth}
             >
               <ChevronLeft size={16} />
             </Button>
@@ -80,7 +80,7 @@ export function EventCalendarView({ events }: { events: EventListItem[] }) {
               aria-label="Next Month"
               size="sm"
               variant="ghost"
-              onClick={nextMonth}
+              onPress={nextMonth}
             >
               <ChevronRight size={16} />
             </Button>

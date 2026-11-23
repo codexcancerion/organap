@@ -1,8 +1,18 @@
 // Feature types for User Directory & Management in OrGanap.
 import type { UserGroup, UserProfile } from "@/types";
 
+export type AdminUserOrganization = {
+  id: string;
+  name: string;
+  acronym: string;
+  position: string | null;
+  isOfficer: boolean;
+};
+
 export type AdminUserListItem = UserProfile & {
+  email?: string | null;
   groups: UserGroup[];
+  organizations?: AdminUserOrganization[];
 };
 
 export type UpdateUserProfileInput = {

@@ -1,14 +1,29 @@
 import React from "react";
+import NextLink from "next/link";
 import clsx from "clsx";
+import { ArrowLeft } from "lucide-react";
+
+export type PageBreadcrumbItem = {
+  /** Visible breadcrumb label */
+  label: React.ReactNode;
+  /** Destination route; omit on the active terminal item */
+  href?: string;
+};
 
 export type PageHeaderProps = {
+  /** Optional breadcrumb trail rendered above the main header row (standard on /id routes) */
+  breadcrumbs?: PageBreadcrumbItem[];
+  /** Optional leading visual (e.g., organization Avatar or entity icon) */
+  media?: React.ReactNode;
   /** The primary page title */
   title: React.ReactNode;
-  /** Optional badge/chip displayed inline with the title */
+  /** Single optional status or count chip displayed inline with the title (max 1 chip) */
   badge?: React.ReactNode;
   /** Optional subtitle or description text */
   description?: React.ReactNode;
-  /** Optional action buttons or controls aligned to the end/right */
+  /** Optional compact inline metadata row displayed below description (never KPI boxes) */
+  meta?: React.ReactNode;
+  /** Action buttons or primary controls aligned to the rightmost edge (never KPIs) */
   actions?: React.ReactNode;
   /** Optional class name overrides */
   className?: string;
@@ -16,45 +31,103 @@ export type PageHeaderProps = {
 
 /**
  * Standard cardless PageHeader layout component across OrGanap.
- * Provides consistent typography, badge alignment, subtitle, and action buttons.
+ * Provides consistent breadcrumbs, leading media, title, single-chip slot,
+ * subtitle/metadata, and right-aligned action buttons.
  */
 export function PageHeader({
+  breadcrumbs,
+  media,
   title,
   badge,
   description,
+  meta,
   actions,
   className,
 }: PageHeaderProps) {
   return (
-    <div
-      className={clsx(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full pt-1 pb-1",
-        className
-      )}
-    >
-      <div className="flex flex-col gap-1 min-w-0">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {typeof title === "string" ? (
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              {title}
-            </h1>
-          ) : (
-            title
-          )}
-          {badge}
-        </div>
-        {description && (
-          <p className="text-xs sm:text-sm text-muted max-w-3xl leading-relaxed">
-            {description}
-          </p>
-        )}
-      </div>
+    <header className={clsx("flex flex-col gap-3 w-full pt-1 pb-1", className)}>
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-xs text-muted flex-wrap"
+        >
+          {breadcrumbs.map((item, index) => {
+            const isFirst = index === 0;
+            const isLast = index === breadcrumbs.length - 1;
 
-      {actions && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 sm:ml-auto">
-          {actions}
+            return (
+              <React.Fragment key={index}>
+                {index > 0 ? (
+                  <span aria-hidden="true" className="text-muted/60">
+                    /
+                  </span>
+                ) : null}
+                {item.href && (!isLast || breadcrumbs.length === 1) ? (
+                  <NextLink
+                    className="inline-flex items-center gap-1 hover:text-foreground transition-colors max-w-[200px] sm:max-w-xs"
+                    href={item.href}
+                  >
+                    {isFirst ? (
+                      <ArrowLeft aria-hidden="true" className="shrink-0" size={14} />
+                    ) : null}
+                    <span className="truncate">{item.label}</span>
+                  </NextLink>
+                ) : (
+                  <span
+                    aria-current={isLast ? "page" : undefined}
+                    className="text-foreground font-medium truncate max-w-[240px] sm:max-w-sm"
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </nav>
+      ) : null}
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+        <div className="flex items-start sm:items-center gap-4 min-w-0">
+          {media ? <div className="shrink-0">{media}</div> : null}
+
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {typeof title === "string" ? (
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  {title}
+                </h1>
+              ) : (
+                title
+              )}
+              {badge}
+            </div>
+
+            {description ? (
+              typeof description === "string" ? (
+                <p className="text-xs sm:text-sm text-muted max-w-3xl leading-relaxed">
+                  {description}
+                </p>
+              ) : (
+                <div className="text-xs sm:text-sm text-muted max-w-3xl leading-relaxed">
+                  {description}
+                </div>
+              )
+            ) : null}
+
+            {meta ? (
+              <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted pt-0.5">
+                {meta}
+              </div>
+            ) : null}
+          </div>
         </div>
-      )}
-    </div>
+
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2 shrink-0 md:ml-auto">
+            {actions}
+          </div>
+        ) : null}
+      </div>
+    </header>
   );
 }

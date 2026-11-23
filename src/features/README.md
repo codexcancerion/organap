@@ -9,11 +9,19 @@ src/features/
   auth/             ← Authentication & user profiles
   dashboard/        ← Role-aware dashboards (student, officer, adviser, student affairs)
   organizations/    ← Recognized campus organizations
-  proposals/        ← Event proposals & two-stage approval routing
-  events/           ← Approved events browsing & calendar
-  registrations/    ← Student event registration & passes
-  attendance/       ← Attendance check-in & verification
-  reports/          ← Participation reports & CSV exports
+  venues/           ← Campus venues & facility booking schedules
+  semesters/        ← Academic semesters & term date bounds
+  departments/      ← Academic departments & contained programs
+  programs/         ← Academic degree programs & parent department mapping
+  proposals/        <- Event proposals & two-stage approval routing
+  events/           <- Unified events explorer, proposals directory & calendar
+  registrations/    <- Student event registration & passes
+  attendance/       <- Unified attendance check-in, participation audits & CSV export
+  notifications/    <- In-app workflow notification inbox & read tracking
+  attachments/      <- Institutional attachment type catalog
+  users/            <- User account directory & dynamic group assignments
+  groups/           <- Dynamic RBAC groups & permission matrix
+  settings/         <- Personal preferences & institutional system settings
 ```
 
 ## Hermeticity Rules

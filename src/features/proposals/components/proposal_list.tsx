@@ -7,6 +7,7 @@ import NextLink from "next/link";
 import {
   Button,
   Card,
+  Chip,
   Input,
   ListBox,
   Select,
@@ -56,7 +57,7 @@ export function ProposalList({ proposals, canCreate = true }: ProposalListProps)
       <PageHeader
         actions={
           canCreate ? (
-            <NextLink href="/proposals/new">
+            <NextLink href="/events/new">
               <Button size="md" variant="primary">
                 <Plus size={16} />
                 Draft Proposal
@@ -65,9 +66,9 @@ export function ProposalList({ proposals, canCreate = true }: ProposalListProps)
           ) : undefined
         }
         badge={
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">
+          <Chip color="accent" size="sm" variant="soft">
             {proposals.length} Proposals
-          </span>
+          </Chip>
         }
         description="Submit, track, and manage student organization activity proposals through two-stage endorsement and venue verification."
         title="Event Proposals"
@@ -148,7 +149,7 @@ export function ProposalList({ proposals, canCreate = true }: ProposalListProps)
       {/* Proposals Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {filtered.map((item) => (
-          <NextLink key={item.id} className="block group" href={`/proposals/${item.id}`}>
+          <NextLink key={item.id} className="block group" href={`/events/${item.id}`}>
             <Card className="border border-border/30 hover:border-accent/40 transition-colors bg-surface p-5 gap-3 cursor-pointer">
               <Card.Header className="flex flex-col gap-1 p-0">
                 <div className="flex items-center justify-between gap-2">
@@ -202,7 +203,7 @@ export function ProposalList({ proposals, canCreate = true }: ProposalListProps)
             No proposal documents match your search query or filter. Create a new event draft to begin the endorsement workflow.
           </p>
           {canCreate && (
-            <NextLink href="/proposals/new">
+            <NextLink href="/events/new">
               <Button className="mt-2" size="sm" variant="primary">
                 <Plus size={15} />
                 Draft Proposal

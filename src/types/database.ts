@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -34,6 +34,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      attachment_types: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_required: boolean
+          name: string
+          template_file_name: string | null
+          template_file_path: string | null
+          template_file_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name: string
+          template_file_name?: string | null
+          template_file_path?: string | null
+          template_file_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name?: string
+          template_file_name?: string | null
+          template_file_path?: string | null
+          template_file_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           check_in_at: string
@@ -42,6 +87,8 @@ export type Database = {
           proposal_id: string
           registration_id: string
           student_id: string
+          verification_method: string | null
+          verified_at: string | null
           verified_by: string
         }
         Insert: {
@@ -51,6 +98,8 @@ export type Database = {
           proposal_id: string
           registration_id: string
           student_id: string
+          verification_method?: string | null
+          verified_at?: string | null
           verified_by: string
         }
         Update: {
@@ -60,6 +109,8 @@ export type Database = {
           proposal_id?: string
           registration_id?: string
           student_id?: string
+          verification_method?: string | null
+          verified_at?: string | null
           verified_by?: string
         }
         Relationships: [
@@ -93,9 +144,95 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      event_attachments: {
+        Row: {
+          attachment_type_id: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_url: string
+          id: string
+          mime_type: string | null
+          proposal_id: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          attachment_type_id?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          proposal_id: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          attachment_type_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          proposal_id?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attachments_attachment_type_id_fkey"
+            columns: ["attachment_type_id"]
+            isOneToOne: false
+            referencedRelation: "attachment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attachments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "event_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_proposals: {
         Row: {
-          activities_desc: string
+          activities_desc: string | null
+          activity_type: string
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
@@ -107,6 +244,7 @@ export type Database = {
           organization_id: string
           purpose: string
           registration_deadline: string
+          semester_id: string | null
           start_time: string
           status: string
           title: string
@@ -114,7 +252,8 @@ export type Database = {
           venue_id: string
         }
         Insert: {
-          activities_desc: string
+          activities_desc?: string | null
+          activity_type?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -126,6 +265,7 @@ export type Database = {
           organization_id: string
           purpose: string
           registration_deadline: string
+          semester_id?: string | null
           start_time: string
           status?: string
           title: string
@@ -133,7 +273,8 @@ export type Database = {
           venue_id: string
         }
         Update: {
-          activities_desc?: string
+          activities_desc?: string | null
+          activity_type?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -145,6 +286,7 @@ export type Database = {
           organization_id?: string
           purpose?: string
           registration_deadline?: string
+          semester_id?: string | null
           start_time?: string
           status?: string
           title?: string
@@ -171,6 +313,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_proposals_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
             referencedColumns: ["id"]
           },
           {
@@ -329,6 +478,7 @@ export type Database = {
           is_adviser: boolean
           is_officer: boolean
           organization_id: string
+          position: string | null
           position_title: string | null
           user_id: string
         }
@@ -338,6 +488,7 @@ export type Database = {
           is_adviser?: boolean
           is_officer?: boolean
           organization_id: string
+          position?: string | null
           position_title?: string | null
           user_id: string
         }
@@ -347,6 +498,7 @@ export type Database = {
           is_adviser?: boolean
           is_officer?: boolean
           organization_id?: string
+          position?: string | null
           position_title?: string | null
           user_id?: string
         }
@@ -370,9 +522,11 @@ export type Database = {
       organizations: {
         Row: {
           acronym: string
+          adviser_id: string | null
           category: string
           created_at: string
           description: string | null
+          governor_id: string | null
           id: string
           is_active: boolean
           logo_url: string | null
@@ -382,9 +536,11 @@ export type Database = {
         }
         Insert: {
           acronym: string
+          adviser_id?: string | null
           category?: string
           created_at?: string
           description?: string | null
+          governor_id?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -394,9 +550,11 @@ export type Database = {
         }
         Update: {
           acronym?: string
+          adviser_id?: string | null
           category?: string
           created_at?: string
           description?: string | null
+          governor_id?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -404,7 +562,22 @@ export type Database = {
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_adviser_id_fkey"
+            columns: ["adviser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_governor_id_fkey"
+            columns: ["governor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -438,10 +611,13 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string
+          email: string | null
+          full_name: string | null
           id: string
           is_active: boolean
           is_staff: boolean
           is_superuser: boolean
+          preferences: Json
           school_id: string | null
           updated_at: string
         }
@@ -449,10 +625,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
+          email?: string | null
+          full_name?: string | null
           id: string
           is_active?: boolean
           is_staff?: boolean
           is_superuser?: boolean
+          preferences?: Json
           school_id?: string | null
           updated_at?: string
         }
@@ -460,14 +639,52 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
+          email?: string | null
+          full_name?: string | null
           id?: string
           is_active?: boolean
           is_staff?: boolean
           is_superuser?: boolean
+          preferences?: Json
           school_id?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      programs: {
+        Row: {
+          code: string
+          created_at: string
+          department_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          department_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          department_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programs_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposal_reviews: {
         Row: {
@@ -513,6 +730,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      semesters: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
@@ -615,27 +862,36 @@ export type Database = {
       venues: {
         Row: {
           capacity: number
+          color: string
           created_at: string
+          icon: string
           id: string
           is_active: boolean
           location: string | null
           name: string
+          updated_at: string
         }
         Insert: {
           capacity?: number
+          color?: string
           created_at?: string
+          icon?: string
           id?: string
           is_active?: boolean
           location?: string | null
           name: string
+          updated_at?: string
         }
         Update: {
           capacity?: number
+          color?: string
           created_at?: string
+          icon?: string
           id?: string
           is_active?: boolean
           location?: string | null
           name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -644,6 +900,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_organization_member: {
+        Args: {
+          p_caller_id?: string
+          p_is_adviser?: boolean
+          p_is_officer?: boolean
+          p_org_id: string
+          p_position?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       approve_event_proposal: {
         Args: {
           p_proposal_id: string
@@ -651,6 +918,14 @@ export type Database = {
           p_reviewer_id: string
         }
         Returns: Json
+      }
+      can_user_delete_org: {
+        Args: { p_org_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      can_user_update_org: {
+        Args: { p_org_id: string; p_user_id?: string }
+        Returns: boolean
       }
       cancel_approved_event: {
         Args: {
@@ -668,6 +943,31 @@ export type Database = {
           p_venue_id: string
         }
         Returns: boolean
+      }
+      create_organization: {
+        Args: {
+          p_acronym: string
+          p_adviser_id?: string
+          p_caller_id?: string
+          p_category: string
+          p_description?: string
+          p_governor_id?: string
+          p_logo_url?: string
+          p_name: string
+          p_slug: string
+        }
+        Returns: Json
+      }
+      delete_organization: {
+        Args: { p_caller_id?: string; p_org_id: string }
+        Returns: Json
+      }
+      get_event_registration_counts: {
+        Args: { p_proposal_ids: string[] }
+        Returns: {
+          proposal_id: string
+          registered_count: number
+        }[]
       }
       get_user_groups: {
         Args: { p_user_id?: string }
@@ -694,6 +994,10 @@ export type Database = {
         Args: { p_org_id: string; p_user_id?: string }
         Returns: boolean
       }
+      is_org_member: {
+        Args: { p_org_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       is_org_officer: {
         Args: { p_org_id: string; p_user_id?: string }
         Returns: boolean
@@ -711,6 +1015,37 @@ export type Database = {
       }
       register_for_event: {
         Args: { p_proposal_id: string; p_student_id: string }
+        Returns: Json
+      }
+      remove_organization_member: {
+        Args: { p_caller_id?: string; p_member_id: string }
+        Returns: Json
+      }
+      update_member_position: {
+        Args: { p_member_id: string; p_position: string; p_user_id?: string }
+        Returns: Json
+      }
+      update_organization_info: {
+        Args: {
+          p_acronym: string
+          p_caller_id?: string
+          p_category: string
+          p_description?: string
+          p_is_active?: boolean
+          p_logo_url?: string
+          p_name: string
+          p_org_id: string
+          p_slug: string
+        }
+        Returns: Json
+      }
+      update_organization_leaders: {
+        Args: {
+          p_adviser_id: string
+          p_caller_id?: string
+          p_governor_id: string
+          p_org_id: string
+        }
         Returns: Json
       }
       withdraw_from_event: {

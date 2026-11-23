@@ -1,31 +1,53 @@
 "use client";
 
-import type { EventListItem } from "../types";
+import type { ActivityType, EventListItem } from "../types";
 
 import React from "react";
 import NextLink from "next/link";
 import {
+  Avatar,
+  Button,
   Card,
   Chip,
-  Input,
+  EmptyState,
   ListBox,
+  SearchField,
   Select,
-  TextField,
+  Tabs,
 } from "@heroui/react";
 import {
-  Calendar,
-  MapPin,
-  Search,
-  Building2,
-  Clock,
   ArrowRight,
+  Calendar,
   CheckCircle2,
-  Filter,
+  Clock,
+  MapPin,
+  Plus,
+  Tag,
 } from "lucide-react";
 
-export function EventCatalog({ events }: { events: EventListItem[] }) {
+import { ProposalStatusChip } from "@/components/ui/proposal_status_chip";
+
+import { ACTIVITY_TYPE_LABELS } from "../types";
+
+export type EventCatalogProps = {
+  events: EventListItem[];
+  canCreateProposal?: boolean;
+};
+
+type EventStatusFilter = "all" | "approved" | "pending" | "drafts";
+
+const PENDING_REVIEW_STATUSES = new Set([
+  "pending_adviser",
+  "pending_student_affairs",
+]);
+
+export function EventCatalog({
+  events,
+  canCreateProposal = false,
+}: EventCatalogProps) {
   const [search, setSearch] = React.useState("");
   const [venueFilter, setVenueFilter] = React.useState("all");
+  const [statusFilter, setStatusFilter] = React.useState<EventStatusFilter>("all");
 
   const uniqueVenues = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -35,53 +57,118 @@ export function EventCatalog({ events }: { events: EventListItem[] }) {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [events]);
 
+  const { approvedCount, pendingCount, draftsCount, hasProposals } = React.useMemo(() => {
+    let approved = 0;
+    let pending = 0;
+    let drafts = 0;
+
+    for (const item of events) {
+      if (item.status === "approved") {
+        approved += 1;
+      } else if (PENDING_REVIEW_STATUSES.has(item.status)) {
+        pending += 1;
+      } else {
+        drafts += 1;
+      }
+    }
+
+    return {
+      approvedCount: approved,
+      pendingCount: pending,
+      draftsCount: drafts,
+      hasProposals: pending > 0 || drafts > 0,
+    };
+  }, [events]);
+
   const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+
     return events.filter((e) => {
+      const typeLabel = e.activityType
+        ? (ACTIVITY_TYPE_LABELS[e.activityType as ActivityType] ?? e.activityType)
+        : "";
       const matchSearch =
-        e.title.toLowerCase().includes(search.toLowerCase()) ||
-        e.organizationName.toLowerCase().includes(search.toLowerCase()) ||
-        e.venueName.toLowerCase().includes(search.toLowerCase()) ||
-        e.purpose.toLowerCase().includes(search.toLowerCase());
+        !q ||
+        e.title.toLowerCase().includes(q) ||
+        e.organizationName.toLowerCase().includes(q) ||
+        e.organizationAcronym.toLowerCase().includes(q) ||
+        e.venueName.toLowerCase().includes(q) ||
+        e.purpose.toLowerCase().includes(q) ||
+        typeLabel.toLowerCase().includes(q) ||
+        (e.semesterName ?? "").toLowerCase().includes(q);
 
       const matchVenue = venueFilter === "all" || e.venueId === venueFilter;
 
-      return matchSearch && matchVenue;
+      let matchStatus = true;
+
+      if (statusFilter === "approved") {
+        matchStatus = e.status === "approved";
+      } else if (statusFilter === "pending") {
+        matchStatus = PENDING_REVIEW_STATUSES.has(e.status);
+      } else if (statusFilter === "drafts") {
+        matchStatus =
+          e.status !== "approved" && !PENDING_REVIEW_STATUSES.has(e.status);
+      }
+
+      return matchSearch && matchVenue && matchStatus;
     });
-  }, [events, search, venueFilter]);
+  }, [events, search, venueFilter, statusFilter]);
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="w-full sm:w-80">
-          <TextField
-            aria-label="Search events"
-            value={search}
-            onChange={(val) => setSearch(val)}
-          >
-            <div className="relative w-full">
-              <Input
-                className="pl-9"
-                placeholder="Search events by title, org, or venue…"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={15}
-              />
-            </div>
-          </TextField>
-        </div>
+      {/* Search, Status Tabs & Venue Filter Toolbar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search events"
+          className="w-full lg:w-80"
+          name="event-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by title, organization, or venue…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Filter size={14} />
-            <span>Venue:</span>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+          {hasProposals ? (
+            <Tabs
+              selectedKey={statusFilter}
+              variant="secondary"
+              onSelectionChange={(key) =>
+                setStatusFilter(String(key) as EventStatusFilter)
+              }
+            >
+              <Tabs.ListContainer>
+                <Tabs.List aria-label="Filter events by status">
+                  <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
+                    All ({events.length})
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab className="text-xs whitespace-nowrap" id="approved">
+                    Approved ({approvedCount})
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab className="text-xs whitespace-nowrap" id="pending">
+                    In Review ({pendingCount})
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab className="text-xs whitespace-nowrap" id="drafts">
+                    Drafts &amp; Returned ({draftsCount})
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </Tabs>
+          ) : null}
+
           <Select
             aria-label="Filter by venue"
-            className="w-52"
+            className="w-full sm:w-56"
             value={venueFilter}
-            onChange={(val) => setVenueFilter(String(val))}
+            onChange={(val) => setVenueFilter(val ? String(val) : "all")}
           >
             <Select.Trigger>
               <Select.Value />
@@ -105,108 +192,223 @@ export function EventCatalog({ events }: { events: EventListItem[] }) {
         </div>
       </div>
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-        {filtered.map((ev) => {
-          const isFull = ev.registeredCount >= ev.capacity;
-          const deadlinePassed = new Date() > new Date(ev.registrationDeadline);
-          const percentFilled = Math.min(100, Math.round((ev.registeredCount / ev.capacity) * 100));
+      {/* Events & Proposals Grid */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+          {filtered.map((ev) => {
+            const isApproved = ev.status === "approved";
+            const isFull = ev.capacity > 0 && ev.registeredCount >= ev.capacity;
+            const deadlinePassed = new Date() > new Date(ev.registrationDeadline);
+            const percentFilled =
+              ev.capacity > 0
+                ? Math.min(100, Math.round((ev.registeredCount / ev.capacity) * 100))
+                : 0;
 
-          return (
-            <NextLink key={ev.id} className="block group h-full" href={`/events/${ev.id}`}>
-              <Card className="border border-border/30 hover:border-accent/40 transition-colors bg-surface p-5 gap-3 h-full flex flex-col justify-between cursor-pointer">
-                <Card.Header className="flex flex-col gap-1.5 p-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-accent flex items-center gap-1">
-                      <Building2 size={13} />
-                      {ev.organizationAcronym}
-                    </span>
-                    {ev.isRegistered ? (
-                      <Chip className="bg-success/15 text-success border border-success/30 font-semibold" size="sm" variant="soft">
-                        <CheckCircle2 className="mr-1 inline" size={12} />
-                        Pass Confirmed
-                      </Chip>
-                    ) : isFull ? (
-                      <Chip color="danger" size="sm" variant="soft">
-                        Full Capacity
-                      </Chip>
-                    ) : deadlinePassed ? (
-                      <Chip color="default" size="sm" variant="soft">
-                        Registration Closed
-                      </Chip>
-                    ) : (
-                      <Chip color="success" size="sm" variant="soft">
-                        Open for Registration
-                      </Chip>
-                    )}
+            return (
+              <Card
+                key={ev.id}
+                className="relative group h-full justify-between gap-3 hover:border-accent/40 transition-colors cursor-pointer"
+              >
+                {/* WHY: Split Card.Header into an identity/status bar and a full-width title row so wide status chips like Open for Registration never squeeze multi-word titles to an ellipsis. */}
+                <Card.Header className="flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between gap-2.5 w-full">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {ev.organizationLogoUrl ? (
+                        <Avatar className="w-9 h-9 rounded-xl bg-accent/10 text-accent shrink-0">
+                          <Avatar.Image
+                            alt={ev.organizationName}
+                            className="object-cover"
+                            src={ev.organizationLogoUrl}
+                          />
+                          <Avatar.Fallback className="bg-accent/10 text-accent text-xs font-bold rounded-xl">
+                            {ev.organizationAcronym.slice(0, 4)}
+                          </Avatar.Fallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0 font-bold text-xs">
+                          {ev.organizationAcronym.slice(0, 4)}
+                        </div>
+                      )}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-foreground truncate leading-tight">
+                          {ev.organizationAcronym}
+                        </span>
+                        <span className="text-[11px] text-muted truncate leading-tight">
+                          {ev.organizationName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isApproved ? (
+                        ev.isRegistered ? (
+                          <Chip
+                            className="bg-success/15 text-success border border-success/30 font-semibold"
+                            size="sm"
+                            variant="soft"
+                          >
+                            <CheckCircle2 className="mr-1 inline" size={12} />
+                            Pass Confirmed
+                          </Chip>
+                        ) : isFull ? (
+                          <Chip color="danger" size="sm" variant="soft">
+                            Full Capacity
+                          </Chip>
+                        ) : deadlinePassed ? (
+                          <Chip color="default" size="sm" variant="soft">
+                            Registration Closed
+                          </Chip>
+                        ) : (
+                          <Chip color="success" size="sm" variant="soft">
+                            Open for Registration
+                          </Chip>
+                        )
+                      ) : (
+                        <ProposalStatusChip status={ev.status} />
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="font-bold text-base text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                    {ev.title}
-                  </h3>
-                  <p className="text-xs text-muted line-clamp-2">
-                    {ev.purpose}
-                  </p>
+                  <div className="flex flex-col gap-1.5 pt-0.5">
+                    <Card.Title className="text-base font-bold leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                      {ev.title}
+                    </Card.Title>
+                    {ev.activityType || ev.semesterName ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {ev.activityType ? (
+                          <Chip
+                            className="text-[11px] font-medium"
+                            color="accent"
+                            size="sm"
+                            variant="soft"
+                          >
+                            <Tag className="mr-1 inline" size={11} />
+                            {ACTIVITY_TYPE_LABELS[ev.activityType as ActivityType] ??
+                              ev.activityType}
+                          </Chip>
+                        ) : null}
+                        {ev.semesterName ? (
+                          <Chip
+                            className="text-[11px] text-muted"
+                            color="default"
+                            size="sm"
+                            variant="soft"
+                          >
+                            {ev.semesterName}
+                          </Chip>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
                 </Card.Header>
 
-                <Card.Content className="p-0 flex-initial pt-2 border-t border-border/20 flex flex-col gap-2.5">
-                  <div className="flex flex-col gap-1.5 text-xs text-muted">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <MapPin className="text-primary shrink-0" size={13} />
-                      <span className="truncate font-medium text-foreground">{ev.venueName}</span>
+                <Card.Content className="flex flex-col gap-3 flex-1">
+                  <p className="text-xs text-muted line-clamp-2 leading-relaxed">
+                    {ev.purpose}
+                  </p>
+
+                  <div className="flex flex-col gap-2 rounded-xl bg-default/5 p-3 border border-border/30 text-xs text-muted mt-auto">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="text-accent shrink-0" size={13} />
+                      <span className="truncate font-medium text-foreground">
+                        {ev.venueName}
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="text-primary shrink-0" size={13} />
-                      <span>{new Date(ev.startTime).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · {new Date(ev.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                    </div>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="text-accent shrink-0" size={13} />
+                        <span>
+                          {new Date(ev.startTime).toLocaleDateString(undefined, {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })}{" "}
+                          ·{" "}
+                          {new Date(ev.startTime).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="text-warning shrink-0" size={13} />
-                      <span>Closes {new Date(ev.registrationDeadline).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                      <div className="flex items-center gap-1 text-[11px] shrink-0">
+                        <Clock className="text-warning shrink-0" size={12} />
+                        <span>
+                          {isApproved
+                            ? `Closes ${new Date(ev.registrationDeadline).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                            : `${ev.capacity} spots`}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Quota Progress Bar */}
-                  <div className="flex flex-col gap-1 pt-1">
-                    <div className="flex items-center justify-between text-[11px] text-muted">
-                      <span>{ev.registeredCount} / {ev.capacity} spots</span>
-                      <span className="font-semibold text-foreground">{percentFilled}%</span>
+                  {isApproved ? (
+                    <div className="flex flex-col gap-1 pt-1">
+                      <div className="flex items-center justify-between text-[11px] text-muted">
+                        <span>
+                          {ev.registeredCount} / {ev.capacity} spots
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {percentFilled}%
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-default/20 overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            percentFilled >= 100
+                              ? "bg-danger"
+                              : percentFilled >= 80
+                                ? "bg-warning"
+                                : "bg-primary"
+                          }`}
+                          style={{ width: `${percentFilled}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 rounded-full bg-default/20 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          percentFilled >= 100
-                            ? "bg-danger"
-                            : percentFilled >= 80
-                              ? "bg-warning"
-                              : "bg-primary"
-                        }`}
-                        style={{ width: `${percentFilled}%` }}
-                      />
-                    </div>
-                  </div>
+                  ) : null}
                 </Card.Content>
 
-                <Card.Footer className="p-0 pt-2 flex items-center justify-between text-xs text-muted border-t border-border/20">
-                  <span>{ev.organizationName}</span>
-                  <span className="flex items-center gap-1 text-accent font-semibold group-hover:translate-x-0.5 transition-transform">
-                    Details <ArrowRight size={13} />
+                {/* UI/UX FLOW: Use concise acronym attribution and lock CTA whitespace so View Details never wraps beside long organization names. */}
+                <Card.Footer className="flex items-center justify-between gap-3 pt-2.5 border-t border-border/20">
+                  <span className="text-xs text-muted truncate min-w-0">
+                    {isApproved
+                      ? `Hosted by ${ev.organizationAcronym}`
+                      : `By ${ev.creatorName ?? ev.organizationAcronym}`}
                   </span>
+                  <NextLink
+                    className="ml-auto shrink-0 whitespace-nowrap inline-flex items-center gap-1 text-xs font-semibold text-accent group-hover:translate-x-0.5 transition-transform after:absolute after:inset-0 after:content-['']"
+                    href={`/events/${ev.id}`}
+                  >
+                    {isApproved ? "View Details" : "View Proposal"}{" "}
+                    <ArrowRight size={13} />
+                  </NextLink>
                 </Card.Footer>
               </Card>
-            </NextLink>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 && (
-        <Card className="border border-dashed border-border/60 bg-surface p-12 text-center flex flex-col items-center gap-2">
-          <Calendar className="text-muted size-10" />
-          <h3 className="text-base font-semibold text-foreground">No Approved Events Found</h3>
-          <p className="text-xs text-muted max-w-sm">
-            There are currently no scheduled events matching your criteria. Check back soon for new campus activities!
-          </p>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="p-10 text-center items-center gap-3">
+          <EmptyState className="flex flex-col items-center text-center gap-2">
+            <Calendar className="text-muted" size={32} />
+            <span className="text-base font-semibold text-foreground">
+              No Events Found
+            </span>
+            <p className="text-xs text-muted max-w-md">
+              {events.length === 0
+                ? "There are currently no scheduled campus events or visible proposals."
+                : "No events matched your search or filter criteria."}
+            </p>
+            {canCreateProposal && events.length === 0 ? (
+              <NextLink href="/events/new">
+                <Button size="sm" variant="primary">
+                  <Plus size={15} />
+                  Draft First Proposal
+                </Button>
+              </NextLink>
+            ) : null}
+          </EmptyState>
         </Card>
       )}
     </div>

@@ -1,35 +1,26 @@
+import type {
+  EventAttachment,
+  ProposalListItem,
+} from "@/types/domain";
+
+export { ACTIVITY_TYPE_LABELS } from "@/types/domain";
 export type {
+  ActivityType,
+  AttachmentType,
+  EventAttachment,
   EventProposal,
+  ProposalListItem,
   ProposalStatus,
   ProposalReview,
   ReviewDecision,
   ReviewStage,
 } from "@/types/domain";
 
-export type ProposalListItem = {
-  id: string;
-  title: string;
-  purpose: string;
-  organizationId: string;
-  organizationName: string;
-  organizationAcronym: string;
-  venueId: string;
-  venueName: string;
-  venueCapacity: number;
-  startTime: string;
-  endTime: string;
-  registrationDeadline: string;
-  capacity: number;
-  status: string;
-  cancellationReason: string | null;
-  createdById: string | null;
-  creatorName: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type ProposalDetail = ProposalListItem & {
   activitiesDesc: string;
+  organizationGovernorId?: string | null;
+  organizationAdviserId?: string | null;
+  attachments: EventAttachment[];
   reviews: {
     id: string;
     stage: string;
@@ -41,11 +32,20 @@ export type ProposalDetail = ProposalListItem & {
   }[];
 };
 
+export type ProposalSemesterOption = {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
 export type ProposalFormData = {
   title: string;
   organizationId: string;
   purpose: string;
-  activitiesDesc: string;
+  activitiesDesc?: string;
+  activityType: string;
+  semesterId: string | null;
   venueId: string;
   startTime: string;
   endTime: string;

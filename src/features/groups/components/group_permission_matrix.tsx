@@ -23,8 +23,12 @@ export type GroupPermissionMatrixProps = {
 const MODULE_LABELS: Record<string, string> = {
   organizations: "Student Organizations",
   venues: "Campus Venues",
+  semesters: "Academic Semesters",
+  departments: "Academic Departments",
+  programs: "Academic Programs",
   proposals: "Event Proposals & Workflow",
   events: "Campus Events & Registration",
+  attachments: "Event Attachment Types",
   attendance: "Digital Attendance & QR",
   reports: "Participation & Analytics",
   users: "User Directory & Management",

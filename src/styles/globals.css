@@ -3,9 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-logo: var(--font-bowlby), var(--font-inter), sans-serif;
+}
+
 @theme {
-  --font-sans: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --animate-fade-in: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);

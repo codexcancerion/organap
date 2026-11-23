@@ -5,19 +5,22 @@ import type { AttendanceEventItem } from "../types";
 import React from "react";
 import NextLink from "next/link";
 import {
+  Avatar,
+  Button,
   Card,
   Chip,
-  Button,
-  Input,
+  EmptyState,
+  ProgressBar,
+  SearchField,
+  Tabs,
 } from "@heroui/react";
 import {
   Calendar,
+  ChevronRight,
   Clock,
   MapPin,
-  Users,
-  Search,
-  ChevronRight,
   Radio,
+  Users,
 } from "lucide-react";
 
 import { formatDate, formatTime } from "@/utils/formatters";
@@ -26,71 +29,151 @@ export type AttendanceEventPickerProps = {
   events: AttendanceEventItem[];
 };
 
+type WindowTab = "all" | "live" | "upcoming" | "closed";
+
 export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
   const [query, setQuery] = React.useState("");
+  const [tab, setTab] = React.useState<WindowTab>("all");
+
+  const { liveCount, upcomingCount, closedCount } = React.useMemo(() => {
+    let live = 0;
+    let upcoming = 0;
+    let closed = 0;
+
+    for (const evt of events) {
+      if (evt.isWindowOpen) live += 1;
+      else if (evt.isWindowClosed) closed += 1;
+      else upcoming += 1;
+    }
+
+    return { liveCount: live, upcomingCount: upcoming, closedCount: closed };
+  }, [events]);
 
   const filteredEvents = React.useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    if (!q) return events;
-
-    return events.filter(
-      (e) =>
+    return events.filter((e) => {
+      const matchesQuery =
+        !q ||
         e.title.toLowerCase().includes(q) ||
         e.organizationName.toLowerCase().includes(q) ||
         e.organizationAcronym.toLowerCase().includes(q) ||
-        e.venueName.toLowerCase().includes(q)
-    );
-  }, [events, query]);
+        e.venueName.toLowerCase().includes(q);
+
+      if (!matchesQuery) return false;
+
+      if (tab === "live") return e.isWindowOpen;
+      if (tab === "upcoming") return !e.isWindowOpen && !e.isWindowClosed;
+      if (tab === "closed") return e.isWindowClosed;
+
+      return true;
+    });
+  }, [events, query, tab]);
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="w-full sm:max-w-md relative">
-          <Input
-            aria-label="Search events"
-            className="pl-9"
-            placeholder="Search by event title, organization, or venue..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <Search className="text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" size={16} />
-        </div>
-        <p className="text-xs text-muted self-start sm:self-center">
-          Showing {filteredEvents.length} of {events.length} eligible events
-        </p>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search attendance events"
+          className="w-full lg:w-80"
+          name="attendance-event-search"
+          value={query}
+          onChange={setQuery}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by event title, org, or venue…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
+
+        <Tabs
+          selectedKey={tab}
+          variant="secondary"
+          onSelectionChange={(key) => setTab(String(key) as WindowTab)}
+        >
+          <Tabs.ListContainer>
+            <Tabs.List aria-label="Filter attendance events by window status">
+              <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
+                All ({events.length})
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab className="text-xs whitespace-nowrap" id="live">
+                Live Now ({liveCount})
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab className="text-xs whitespace-nowrap" id="upcoming">
+                Upcoming ({upcomingCount})
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab className="text-xs whitespace-nowrap" id="closed">
+                Closed ({closedCount})
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
       </div>
 
       {filteredEvents.length === 0 ? (
-        <Card className="border border-divider bg-card/60 p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted/20 text-muted mb-4">
-            <Radio size={24} />
-          </div>
-          <h3 className="text-base font-semibold text-foreground">No events found</h3>
-          <p className="text-sm text-muted mt-1 max-w-sm mx-auto">
-            {query
-              ? "No events match your search term. Try a different query."
-              : "There are currently no approved campus events ready for attendance verification."}
-          </p>
+        <Card className="border border-dashed border-border/60 bg-surface p-10 text-center items-center">
+          <EmptyState className="flex flex-col items-center text-center gap-2">
+            <Radio className="text-muted size-10" />
+            <h3 className="text-base font-semibold text-foreground">
+              No Events Found
+            </h3>
+            <p className="text-xs text-muted max-w-sm">
+              {query || tab !== "all"
+                ? "No authorized events matched your search or check-in window filter."
+                : "There are currently no approved campus events within your organization scope ready for attendance verification."}
+            </p>
+          </EmptyState>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
           {filteredEvents.map((evt) => {
             const turnoutPercent =
               evt.registeredCount > 0
-                ? Math.round((evt.attendedCount / evt.registeredCount) * 100)
+                ? Math.min(
+                    100,
+                    Math.round((evt.attendedCount / evt.registeredCount) * 100)
+                  )
                 : 0;
 
             return (
               <Card
                 key={evt.id}
-                className="flex flex-col justify-between border border-divider hover:border-primary/40 bg-card transition-all p-5 shadow-sm"
+                className="h-full justify-between gap-3 border border-border/30 hover:border-accent/40 bg-surface p-5 transition-colors"
               >
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                      {evt.organizationAcronym}
-                    </span>
+                <Card.Header className="flex flex-col gap-2.5 p-0">
+                  <div className="flex items-center justify-between gap-2.5 w-full">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {evt.organizationLogoUrl ? (
+                        <Avatar className="w-8 h-8 rounded-xl bg-accent/10 text-accent shrink-0">
+                          <Avatar.Image
+                            alt={evt.organizationName}
+                            className="object-cover"
+                            src={evt.organizationLogoUrl}
+                          />
+                          <Avatar.Fallback className="bg-accent/10 text-accent text-xs font-bold rounded-xl">
+                            {evt.organizationAcronym.slice(0, 4)}
+                          </Avatar.Fallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0 font-bold text-xs">
+                          {evt.organizationAcronym.slice(0, 4)}
+                        </div>
+                      )}
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-foreground truncate">
+                          {evt.organizationAcronym}
+                        </span>
+                        <span className="text-[11px] text-muted truncate">
+                          {evt.organizationName}
+                        </span>
+                      </div>
+                    </div>
+
                     {evt.isWindowOpen ? (
                       <Chip color="success" size="sm" variant="soft">
                         <span className="flex items-center gap-1 font-medium">
@@ -108,63 +191,70 @@ export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
                     )}
                   </div>
 
-                  <div>
-                    <h3 className="font-semibold text-base text-foreground line-clamp-1">
-                      {evt.title}
-                    </h3>
-                    <p className="text-xs text-muted line-clamp-1 mt-0.5">
-                      {evt.organizationName}
-                    </p>
-                  </div>
+                  <Card.Title className="font-bold text-base text-foreground line-clamp-2 leading-snug">
+                    {evt.title}
+                  </Card.Title>
+                </Card.Header>
 
-                  <div className="space-y-1.5 text-xs text-muted pt-1">
+                <Card.Content className="p-0 flex flex-col gap-3 flex-1">
+                  <div className="space-y-1.5 text-xs text-muted pt-2 border-t border-border/20">
                     <div className="flex items-center gap-2">
-                      <Calendar className="shrink-0 text-muted" size={13} />
+                      <Calendar className="shrink-0 text-accent" size={13} />
                       <span>{formatDate(evt.startTime)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="shrink-0 text-muted" size={13} />
+                      <Clock className="shrink-0 text-accent" size={13} />
                       <span>
-                        {formatTime(evt.startTime)} - {formatTime(evt.endTime)}
+                        {formatTime(evt.startTime)} – {formatTime(evt.endTime)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="shrink-0 text-muted" size={13} />
+                      <MapPin className="shrink-0 text-accent" size={13} />
                       <span className="truncate">{evt.venueName}</span>
                     </div>
                   </div>
 
-                  <div className="mt-2 rounded-lg bg-default-100/50 p-2.5">
-                    <div className="flex items-center justify-between text-xs mb-1">
+                  <div className="mt-auto rounded-xl bg-default/10 border border-border/20 p-3 flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-xs">
                       <span className="text-muted flex items-center gap-1.5">
                         <Users size={13} />
                         Turnout
                       </span>
-                      <span className="font-semibold text-foreground">
+                      <span className="font-semibold text-foreground tabular-nums">
                         {evt.attendedCount} / {evt.registeredCount} ({turnoutPercent}%)
                       </span>
                     </div>
-                    <div className="h-1.5 w-full bg-default-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(100, turnoutPercent)}%` }}
-                      />
-                    </div>
+                    <ProgressBar
+                      aria-label="Event attendance turnout"
+                      color={
+                        evt.isWindowOpen
+                          ? "success"
+                          : turnoutPercent > 0
+                            ? "accent"
+                            : "default"
+                      }
+                      size="sm"
+                      value={turnoutPercent}
+                    >
+                      <ProgressBar.Track>
+                        <ProgressBar.Fill />
+                      </ProgressBar.Track>
+                    </ProgressBar>
                   </div>
-                </div>
+                </Card.Content>
 
-                <div className="pt-4 mt-2 border-t border-divider flex items-center justify-end">
+                <Card.Footer className="p-0 pt-3 border-t border-border/20 flex items-center justify-end">
                   <NextLink className="w-full" href={`/attendance/${evt.id}`}>
                     <Button
                       className="w-full font-medium"
                       size="sm"
                       variant={evt.isWindowOpen ? "primary" : "secondary"}
                     >
-                      Open Desk
+                      Open Check-In Desk
                       <ChevronRight size={14} />
                     </Button>
                   </NextLink>
-                </div>
+                </Card.Footer>
               </Card>
             );
           })}

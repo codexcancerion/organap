@@ -7,8 +7,10 @@ describe("validateProposalForm", () => {
     title: "Tech Summit 2026",
     organizationId: "org-1",
     venueId: "venue-1",
-    purpose: "Annual tech conference for computer science students.",
-    activitiesDesc: "Keynotes, workshops, coding challenges, networking.",
+    purpose: "Annual tech conference with keynotes, workshops, coding challenges, and networking.",
+    activitiesDesc: "",
+    activityType: "seminar",
+    semesterId: "sem-1",
     capacity: 150,
     startTime: "2026-12-01T09:00:00Z",
     endTime: "2026-12-01T17:00:00Z",
@@ -23,6 +25,26 @@ describe("validateProposalForm", () => {
 
     expect(res.isValid).toBe(false);
     expect(res.error).toBe("Event title is required.");
+  });
+
+  it("rejects proposal when activity type is missing", () => {
+    const res = validateProposalForm({
+      ...baseValidData,
+      activityType: "",
+    });
+
+    expect(res.isValid).toBe(false);
+    expect(res.error).toBe("Please select an activity type.");
+  });
+
+  it("rejects proposal when rationale is empty", () => {
+    const res = validateProposalForm({
+      ...baseValidData,
+      purpose: "   ",
+    });
+
+    expect(res.isValid).toBe(false);
+    expect(res.error).toBe("Event rationale is required.");
   });
 
   it("rejects proposal when end time is before start time", () => {

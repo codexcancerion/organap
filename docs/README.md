@@ -11,6 +11,7 @@ Welcome to the **OrGanap** technical and architecture documentation directory.
 | [`architecture.md`](architecture.md) | System design, vertical slices, RLS security boundary, and session management. |
 | [`database.md`](database.md) | Database schema, tables, relationships, constraints, and trigger definitions. |
 | [`rationale.md`](rationale.md) | Problem analysis, institutional context, and business goals. |
+| [`card_standard.md`](card_standard.md) | Unified HeroUI v3 entity card layout, icon alignment, footer placement, and Settings/Danger Zone standard. |
 | [`phased_implementation_plan.md`](phased_implementation_plan.md) | Development roadmap from initialization to final release. |
 | [`changelog.md`](changelog.md) | Release history and version notes mirror. |
 | [`OrGanap_Requirements_Specification.docx`](OrGanap_Requirements_Specification.docx) | Original source specification document from project requirements. |

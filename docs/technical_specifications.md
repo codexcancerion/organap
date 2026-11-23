@@ -7,88 +7,72 @@
 
 ## Contents
 
-1. **System Requirements Specification (SRS)**
+1. **System Requirements Specification**
    - 1.1 Functional Requirements (FR-01 to FR-18)
    - 1.2 Non-Functional Requirements (NFR-01 to NFR-08)
 2. **System Design Specifications**
-   - 2.1 Users, Stakeholders, and Role Matrix
-   - 2.2 End-to-End Workflows & Decision Logic
-   - 2.3 Venue Conflict Detection Engine
-   - 2.4 Entity Relationship Diagram (ERD) & Schemas
+   - 2.1 Users, Stakeholders, and Dynamic RBAC Matrix
+   - 2.2 Venue Conflict Detection Logic
 3. **Development Specifications**
    - 3.1 UI/UX & Design System (HeroUI v3 + Tailwind v4)
    - 3.2 Development Technologies & Tooling
-   - 3.3 Folder Layout, Pages, Components, and Services Architecture
+   - 3.3 Folder Layout, Routes, Components, and Services Architecture
 
 ---
 
-# I. System Requirements Specification (SRS)
+# I. System Requirements Specification
 
-## 1.1 Functional Requirements
+## 1.1 Functional Requirements (Implemented Baseline)
 
-| ID | Requirement Statement | Description | Priority |
+| ID | Requirement Statement | Implemented Baseline Behavior | Priority |
 | :--- | :--- | :--- | :--- |
-| **FR-01** | Account Authentication | Authenticate active users via school credentials. Invalid credentials and inactive accounts are denied access. | Must Have |
-| **FR-02** | Account & Role Governance | Designated Student Affairs personnel manage account activation, roles, and organization associations. | Must Have |
-| **FR-03** | Proposal Drafting | Organization officers create and save draft event proposals (title, purpose, activities, venue, times, capacity, registration deadline). | Must Have |
-| **FR-04** | Proposal Validation & Routing | Validate proposal rules before routing to assigned adviser (future dates, capacity > 0, deadline ≤ start time). Status: `Pending Adviser Review`. | Must Have |
-| **FR-05** | Faculty Adviser Review | Assigned adviser can endorse (routes to Student Affairs), return for revision, or reject. Returns and rejections require remarks. | Must Have |
-| **FR-06** | Student Affairs Final Review | Authorized Student Affairs personnel approve, return, or reject. Approval requires successful venue conflict check. Returns/rejections require remarks. | Must Have |
-| **FR-07** | Venue Conflict Prevention | Prevent approval when an overlapping approved event occupies the same venue. Overlap condition: `startA < endB AND endA > startB`. Cancelled events do not reserve venues. | Must Have |
-| **FR-08** | Revision & Resubmission | Submitting officer can revise and resubmit proposals marked `Returned for Revision`. Resubmission restarts adviser review while retaining decision history. | Must Have |
-| **FR-09** | Chronological Review History | Display proposal status and immutable history (decision, reviewer, timestamp, remarks) to submitting org and reviewers. | Must Have |
-| **FR-10** | Student Event Exploration | Active students view approved event details (org, purpose, venue, schedule, capacity, registration deadline). Unapproved proposals excluded. | Must Have |
-| **FR-11** | In-App Notifications | Automated in-app alerts for pending reviews, review outcomes, and event cancellations. | Should Have |
-| **FR-12** | Event Registration & Withdrawal | Active students register or withdraw before the deadline. Registration requires capacity > 0 and no existing registration. Withdrawal releases place. | Must Have |
-| **FR-13** | Digital Attendance Verification | Authorized organizing officer records verified student attendance during the event's scheduled window. Exactly one check-in timestamp per student. | Must Have |
-| **FR-14** | Attendance Report & CSV Export | Export detailed attendance reports (registered vs attended, timestamps, totals) for officers (own org) and Student Affairs (institutional). | Must Have |
-| **FR-15** | Event Cancellation | Student Affairs can cancel approved events with stated reason. Releases venue, halts registrations/check-ins, notifies registrants. | Must Have |
-| **FR-16** | Event Calendar View | Interactive calendar organizing approved events by date with drill-down modals. | Should Have |
-| **FR-17** | QR Code Attendance Check-In | Event-specific QR ticket per registration. Officer scans or validates QR codes, enforcing FR-13 rules. | Could Have |
-| **FR-18** | Analytics & Participation Counters | Dashboard summary counts (approved events, registrations, attendees) scoped to organization or institution. | Could Have |
+| **FR-01** | Account Authentication | Authenticate active users via school credentials (`@supabase/ssr` + Next.js 16 Proxy). Invalid credentials and inactive accounts are denied access. | Must Have |
+| **FR-02** | Account & Role Governance | Student Affairs and superusers manage account activation, dynamic groups (`groups`, `permissions`, `user_groups`), and organization assignments via `/admin/users` and `/admin/groups`. | Must Have |
+| **FR-03** | Collaborative Proposal Drafting | Authorized org members and officers create and edit draft proposals with title, activity type, academic semester, rationale, activities, venue, schedule, capacity, deadline, and file attachments (`/events/new`, `/events/[id]/edit`). | Must Have |
+| **FR-04** | Proposal Validation & Routing | Validates required fields, positive capacity, end after start, deadline at or before start, and mandatory institutional `attachment_types` before transitioning to `pending_adviser`. | Must Have |
+| **FR-05** | Faculty Adviser Review | Assigned organization adviser endorses to Student Affairs or returns/rejects with mandatory remarks. | Must Have |
+| **FR-06** | Student Affairs Final Review | Authorized Student Affairs personnel approve, return, or reject endorsed proposals. Approval requires passing venue conflict check. | Must Have |
+| **FR-07** | Venue Conflict Prevention | Blocks approval when an overlapping approved event occupies the same venue (`startA < endB AND endA > startB`), serialized with a PostgreSQL row lock on `venues`. Cancelled events release venues. | Must Have |
+| **FR-08** | Revision & Resubmission | Returned proposals stay editable by the submitting organization. Resubmission restarts adviser review while retaining full chronological review history. | Must Have |
+| **FR-09** | Chronological Review History | Displays status and immutable `proposal_reviews` trail (decision, reviewer, timestamp, remarks) at `/events/[id]?view=review`. | Must Have |
+| **FR-10** | Unified Events & Proposal Explorer | `/events` merges approved/cancelled events with RLS-visible in-workflow proposals for authorized roles; students see only approved/cancelled events. Legacy `/proposals/*` redirects to `/events/*`. | Must Have |
+| **FR-11** | In-App Notifications | Database trigger (`trg_notify_proposal_workflow`) and stored procedures dispatch alerts for submissions, endorsements, returns, rejections, approvals, registrations, and cancellations, surfaced on `/notifications` with unread badges. | Should Have |
+| **FR-12** | Event Registration & Withdrawal | Active students register (`register_for_event`) or withdraw (`withdraw_from_event` via HeroUI `AlertDialog`) before deadline while capacity remains. Checked-in registrations cannot be withdrawn. | Must Have |
+| **FR-13** | Digital Attendance Verification | Authorized officers of the organizing group or Student Affairs staff record attendance within `[start_time - 30 min, end_time]`. Cross-organization officers are blocked; duplicate check-ins are rejected. | Must Have |
+| **FR-14** | Unified Attendance & CSV Audit Export | `/attendance/[id]` combines live check-in verification with turnout, capacity utilization, attendee email/ID roster, and RFC 4180 UTF-8 BOM CSV export (`src/utils/attendance_csv.ts`). `/reports/*` redirects to `/attendance/*`. | Must Have |
+| **FR-15** | Event Cancellation | Student Affairs cancels approved events before start time with official reason, releasing the venue, halting registrations/check-ins, and notifying registrants. | Must Have |
+| **FR-16** | Event Calendar View | Interactive calendar tab inside `/events` organizing events by date with direct detail links. | Should Have |
+| **FR-17** | QR Pass & Passcode Check-In | Generates a 32-character crypto hex token (`extensions.gen_random_bytes`) and 16-character hyphenated passcode (`XXXX-XXXX-XXXX-XXXX`) rendered as SVG QR passes on `/registrations` and event modals, rejecting withdrawn or wrong-event tokens. | Could Have |
+| **FR-18** | Role-Scoped Overview Dashboard | `/dashboard` renders 4 role-adapted KPI cards, scoped registration and attendance counts, live review/pass action queues, and upcoming approved events. | Could Have |
 
 ## 1.2 Non-Functional Requirements
 
-- **NFR-01 (Performance)**: 95% of event listings, proposal status queries, and registrations respond within 3 seconds under 100 concurrent users.
-- **NFR-02 (Security & Access Control)**: Enforce role and organization permissions on every protected screen, API route, and database request via Postgres Row Level Security (RLS).
-- **NFR-03 (Credential Security)**: HTTPS transport enforcement; passwords hashed with PBKDF2/Argon2 via Supabase Auth; no plain-text credential leaks.
-- **NFR-04 (Usability)**: First-time student users can locate an approved event and register within 3 minutes without assistance.
-- **NFR-05 (Accessibility)**: Full keyboard operability, visible focus rings, descriptive labels, and non-color-exclusive error feedback.
-- **NFR-06 (Reliability & Backups)**: Automated daily database backups with recovery within 4 hours.
-- **NFR-07 (Data Privacy)**: Restrict student profiles to School ID, Name, School Email, and Role. Student attendees cannot inspect other attendees' registrations.
-- **NFR-08 (Concurrency & Data Integrity)**: Atomic transactions for venue booking (preventing double booking) and registration capacity decrements (preventing overbooking).
+- **NFR-01 (Performance)**: Server queries leverage React `cache()` and parallel `Promise.all` aggregations (`head: true` count queries and `get_event_registration_counts` RPC) for fast page loads.
+- **NFR-02 (Security & Access Control)**: Enforces role, dynamic permission, and organization-scoped access in Next.js routes, Sidebar navigation, stored procedures, and PostgreSQL RLS policies.
+- **NFR-03 (Credential Security)**: HTTPS transport enforcement; credentials hashed by Supabase Auth with HTTP-only SSR session cookies refreshed per request by `src/proxy.ts`.
+- **NFR-04 (Usability)**: One-click event registration immediately opens the Digital Entry Pass modal with QR SVG and copyable passcode, while withdrawal confirms cleanly via HeroUI `AlertDialog`.
+- **NFR-05 (Accessibility)**: HeroUI v3 React Aria primitives ensure keyboard navigation, visible focus rings, descriptive labels, and accessible form/dialog states.
+- **NFR-06 (Reliability & Backups)**: Forward-only PostgreSQL migrations in `supabase/migrations/` preserve schema history and audit logs.
+- **NFR-07 (Data Privacy & Legal Transparency)**: Public `/privacy` and `/terms` pages document institutional data boundaries; `get_event_registration_counts` supplies live seat availability totals without exposing student rosters in UI views.
+- **NFR-08 (Concurrency & Data Integrity)**: PostgreSQL `FOR UPDATE` locks serialize concurrent venue approvals (`approve_event_proposal`) and seat claims (`register_for_event`), while partial unique indexes enforce single active registrations and attendance records.
 
 ---
 
 # II. System Design Specifications
 
-## 2.1 Users and Role Matrix
+## 2.1 Users and Dynamic RBAC Matrix
 
-1. **Student (`student`)**:
-   - Browse approved public events and calendar.
-   - Register for events and withdraw before deadline.
-   - Access personal registration passes and QR codes.
-2. **Organization Officer (`officer`)**:
-   - Manage assigned organization profile and roster.
-   - Create, edit, draft, and resubmit event proposals.
-   - Monitor real-time proposal approval progression and remarks.
-   - Conduct event check-in (manual ID lookup & QR scanner).
-   - Generate and download CSV attendance reports for their organization.
-3. **Faculty Adviser (`adviser`)**:
-   - Review submitted proposals for assigned organizations.
-   - Endorse to Student Affairs or return/reject with remarks.
-   - Review historical endorsements and proposal decisions.
-4. **Student Affairs Personnel (`student_affairs`)**:
-   - Perform final review of endorsed proposals with venue conflict engine.
-   - Cancel approved events with official reason.
-   - Manage institutional venues, organizations, and officer/adviser assignments.
-   - Access institution-wide analytics and cross-organizational attendance records.
-5. **Superadmin / IT Admin (`superadmin`)**:
-   - Full system administration, account role overrides, audit logging, system health.
+Access combines `profiles.is_superuser`, `profiles.is_staff`, dynamic `groups`/`permissions`, and `organizations`/`organization_members` assignments:
+
+1. **Student**: Browse `/events` and calendar, register/withdraw before deadline, present QR passes on `/registrations`, manage profile/preferences.
+2. **Organization Officer / Governor**: Draft, edit, attach files, and resubmit organization proposals; monitor review history; verify attendance and export CSV reports exclusively for their assigned organization via `/attendance`.
+3. **Faculty Adviser**: Review and endorse, return, or reject proposals for assigned organizations (`organizations.adviser_id`).
+4. **Student Affairs Personnel**: Perform final proposal reviews with venue conflict checking, cancel approved events, manage organizations, venues, users, and dynamic groups, and oversee institutional attendance.
+5. **Superadmin**: Unrestricted system administration, including academic semesters, departments, programs, institutional settings, and attachment type definitions.
 
 ## 2.2 Venue Conflict Detection Logic
 
-To prevent double booking (FR-07), any proposal approval at the Student Affairs stage evaluates the query:
+To prevent double booking (FR-07), `public.check_venue_conflict` evaluates:
 
 $$\text{Conflict} \iff \text{venue\_id}_A = \text{venue\_id}_B \land \text{start}_A < \text{end}_B \land \text{end}_A > \text{start}_B \land \text{status}_B = \text{'approved'}$$
 
@@ -98,17 +82,29 @@ Events ending exactly when another starts do not conflict ($\text{end}_A = \text
 
 # III. Development Specifications
 
-## 3.1 Design System & UI/UX
+## 3.1 UI/UX & Design System
 
-- **HeroUI v3**: Exclusive use of `@heroui/react` and `@heroui/styles` with compound components (`Card.Header`, `Card.Content`, `Form`, `TextField`, `Modal`, `Drawer`).
-- **Tailwind CSS v4**: Theme tokens defined in `src/styles/globals.css`.
-- **Feedback**: HeroUI Toast notifications (`toast.success()`, `toast.danger()`).
+- **HeroUI v3 Only**: Exclusive use of `@heroui/react` and `@heroui/styles` with compound anatomies (`Card.Header`/`Content`/`Footer`, `Modal.Backdrop` > `Modal.Container` > `Modal.Dialog`, `AlertDialog`, `Alert`, `ProgressBar`, `SearchField`, `Tabs`, `EmptyState`, `Table`, `Avatar`, `Chip`).
+- **Tailwind CSS v4 & Variants**: Layout utilities and `tailwind-variants`; no raw CSS files outside `src/styles/globals.css`.
+- **Feedback**: Transient HeroUI `toast` notifications (`toast.success()`, `toast.danger()`, `toast.info()`) via root `<Toast.Provider />`.
+- **Consistent Layout Primitives**: Cardless `<PageHeader />`, `<Section />`, and `<LegalDocumentShell />` across public and authenticated routes.
 
-## 3.2 Tech Stack
+## 3.2 Development Technologies & Tooling
 
-- **Framework**: Next.js 16 (App Router)
-- **Runtime**: React 19 + TypeScript (strict)
-- **Database**: Supabase PostgreSQL with RLS
-- **Auth**: `@supabase/ssr` with Next.js 16 Proxy
-- **Testing**: Vitest + React Testing Library
-- **QR Utilities**: `qrcode` (RFC-compliant vector SVG generation for tickets & check-in passes)
+- **Framework**: Next.js 16 (App Router) with `src/proxy.ts`
+- **Runtime**: React 19 + TypeScript (`strict: true`)
+- **Database**: Supabase PostgreSQL + Storage (`organap-assets`) + RLS
+- **Auth**: `@supabase/ssr`
+- **Icons**: Lucide React
+- **QR & Export**: `qrcode` SVG generator (`src/utils/qr.ts`) and RFC 4180 CSV exporter (`src/utils/attendance_csv.ts`)
+- **Testing & Quality**: Vitest + React Testing Library, ESLint flat config, `npm run rules:check`
+
+## 3.3 Folder Layout, Routes, Components, and Services Architecture
+
+- **`src/app/`**:
+  - Public routes: `/`, `/login`, `/register`, `/forgotpassword`, `/reset-password`, `/privacy`, `/terms`.
+  - Authenticated routes under `(auth)/`: `/dashboard`, `/notifications`, `/events`, `/events/new`, `/events/[id]`, `/events/[id]/edit`, `/registrations`, `/attendance`, `/attendance/[id]`, `/organizations`, `/organizations/[id]`, `/venues`, `/venues/[id]`, `/attachments`, `/semesters`, `/departments`, `/departments/[id]`, `/programs`, `/programs/[id]`, `/profile`, `/settings`, `/admin/users`, `/admin/groups`.
+  - Compatibility redirects: `/proposals/*` -> `/events/*`, `/reports/*` -> `/attendance/*`, `/admin/venues` -> `/venues`.
+- **`src/features/`**: Hermetic slices for `auth`, `dashboard`, `notifications`, `events`, `proposals`, `registrations`, `attendance`, `organizations`, `venues`, `attachments`, `semesters`, `departments`, `programs`, `users`, `groups`, and `settings`.
+- **`src/components/`**: Shared `layout/` (`page_header.tsx`, `section.tsx`, `legal_document_shell.tsx`), `navigation/` (`navbar.tsx`, `sidebar.tsx`, `auth_shell.tsx`), and `ui/` primitives.
+- **`src/utils/`**: Shared utilities including `attendance_csv.ts`, `qr.ts`, `formatters.ts`, `image_crop.ts`, `user_preferences.ts`, and `supabase/` clients.

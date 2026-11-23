@@ -31,10 +31,18 @@ export default async function AttendanceDeskPage({
   }
 
   const { id } = await params;
-  const { event, roster } = await getEventAttendanceRoster(id);
+  const { event, roster, canVerify } = await getEventAttendanceRoster(id, {
+    id: user.id,
+    isStaff: user.isStaff,
+    isSuperuser: user.isSuperuser,
+  });
 
   if (!event) {
     notFound();
+  }
+
+  if (!canVerify) {
+    redirect("/attendance");
   }
 
   return <AttendanceConsole event={event} roster={roster} />;

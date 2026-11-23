@@ -18,7 +18,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const metrics = await getDashboardMetrics(user.id);
+  const metrics = await getDashboardMetrics({
+    id: user.id,
+    isStaff: user.isStaff,
+    isSuperuser: user.isSuperuser,
+    permissions: user.permissions,
+  });
 
   return <EmptyDashboard metrics={metrics} user={user} />;
 }

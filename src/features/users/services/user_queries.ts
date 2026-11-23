@@ -1,12 +1,12 @@
 // Server-side queries for User Management (App Router Server Components only).
-import type { AdminUserListItem } from "@/features/users/types";
+import type { AdminUserListItem, AdminUserOrganization } from "@/features/users/types";
 
 import { cache } from "react";
 
 import { createClient } from "@/utils/supabase/server";
 
 /**
- * Fetch all campus users with their profile data and associated dynamic groups.
+ * Fetch all campus users with their profile data, email, organizations, and dynamic groups.
  * Cached per request.
  */
 export const getAdminUsers = cache(async (): Promise<AdminUserListItem[]> => {
@@ -17,6 +17,7 @@ export const getAdminUsers = cache(async (): Promise<AdminUserListItem[]> => {
     .select(`
       id,
       display_name,
+      email,
       school_id,
       avatar_url,
       is_superuser,
@@ -30,6 +31,15 @@ export const getAdminUsers = cache(async (): Promise<AdminUserListItem[]> => {
           id,
           name,
           description
+        )
+      ),
+      organization_members (
+        position,
+        is_officer,
+        organizations:organization_id (
+          id,
+          name,
+          acronym
         )
       )
     `)
@@ -51,9 +61,26 @@ export const getAdminUsers = cache(async (): Promise<AdminUserListItem[]> => {
       .map((ug) => ug.groups)
       .filter((g): g is { id: string; name: string; description: string | null } => Boolean(g));
 
+    const rawOrgs = p.organization_members as unknown as {
+      position: string | null;
+      is_officer: boolean;
+      organizations: { id: string; name: string; acronym: string } | null;
+    }[];
+
+    const organizations: AdminUserOrganization[] = (rawOrgs ?? [])
+      .filter((m) => Boolean(m.organizations))
+      .map((m) => ({
+        id: m.organizations!.id,
+        name: m.organizations!.name,
+        acronym: m.organizations!.acronym,
+        position: m.position,
+        isOfficer: m.is_officer,
+      }));
+
     return {
       id: p.id,
       displayName: p.display_name,
+      email: p.email,
       schoolId: p.school_id,
       avatarUrl: p.avatar_url,
       isSuperuser: p.is_superuser,
@@ -62,6 +89,7 @@ export const getAdminUsers = cache(async (): Promise<AdminUserListItem[]> => {
       createdAt: p.created_at,
       updatedAt: p.updated_at,
       groups,
+      organizations,
     };
   });
 });

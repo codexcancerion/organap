@@ -7,3 +7,4 @@ Contains the isolated Supabase clients across browser, server, and middleware en
 - `middleware.ts`: Next.js 16 proxy session refresher.
 - `queries.ts`: Common cross-cutting read queries.
 - `database.types.ts`: TypeScript schema types re-export.
+- `errors.ts`: PostgreSQL/PostgREST mutation error mapper shared across features.

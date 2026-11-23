@@ -1,7 +1,7 @@
 "use client";
 
 // OrGanap Navbar — receives hydrated user from Server Component layout
-// When authenticated, the sidebar acts as the sole navigator; the navbar shows only branding + theme switch.
+// When authenticated, pairs left contextual breadcrumbs beside branding with a right command search bar, notifications, and theme switch.
 import type { AuthUser } from "@/types";
 
 import * as React from "react";
@@ -21,7 +21,16 @@ import clsx from "clsx";
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import { Logo } from "@/components/ui/logo";
 
-export const Navbar = ({ user }: { user: AuthUser | null }) => {
+import { CommandSearch } from "./command_search";
+import { NavBreadcrumbs } from "./nav_breadcrumbs";
+
+export const Navbar = ({
+  user,
+  unreadCount = 0,
+}: {
+  user: AuthUser | null;
+  unreadCount?: number;
+}) => {
   const pathname = usePathname();
   const drawerState = useOverlayState({ defaultOpen: false });
 
@@ -42,9 +51,15 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className={clsx("flex h-16 items-center justify-between px-4 sm:px-6", user ? "w-full" : "container mx-auto max-w-7xl")}>
-        <div className="flex items-center gap-8">
+      <div
+        className={clsx(
+          "flex h-16 items-center justify-between gap-4 px-4 sm:px-6",
+          user ? "w-full" : "container mx-auto max-w-7xl",
+        )}
+      >
+        <div className={clsx("flex items-center min-w-0", user ? "gap-3 flex-1" : "gap-8")}>
           <Logo />
+          {user && <NavBreadcrumbs />}
           {!user && (
             <nav className="hidden md:flex items-center gap-1">
               {publicNavItems.map((item) => (
@@ -66,14 +81,25 @@ export const Navbar = ({ user }: { user: AuthUser | null }) => {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          {user && <CommandSearch user={user} />}
           {user && (
             <NextLink
+              aria-label={
+                unreadCount > 0
+                  ? `Notifications (${unreadCount} unread)`
+                  : "Notifications"
+              }
               className="p-2 text-muted hover:text-foreground hover:bg-default/15 rounded-xl transition-colors relative"
               href="/notifications"
               title="Notifications"
             >
               <Bell size={18} />
+              {unreadCount > 0 ? (
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </NextLink>
           )}
           <ThemeSwitch />

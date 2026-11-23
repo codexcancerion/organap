@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Button, toast } from "@heroui/react";
-import { Ticket, LogOut } from "lucide-react";
+import { AlertDialog, Button, Chip, Spinner, toast } from "@heroui/react";
+import { CheckCircle2, LogOut, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -16,7 +16,9 @@ export type RegistrationActionButtonProps = {
   eventId: string;
   isRegistered?: boolean;
   registrationId?: string;
+  registrationStatus?: "confirmed" | "attended";
   qrToken?: string;
+  checkInAt?: string | null;
   capacity: number;
   registeredCount: number;
   registrationDeadline: string;
@@ -33,7 +35,9 @@ export function RegistrationActionButton({
   eventId,
   isRegistered = false,
   registrationId,
+  registrationStatus = "confirmed",
   qrToken = "",
+  checkInAt = null,
   capacity,
   registeredCount,
   registrationDeadline,
@@ -48,6 +52,53 @@ export function RegistrationActionButton({
   const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
   const [isPassModalOpen, setIsPassModalOpen] = React.useState(false);
+  const [isWithdrawConfirmOpen, setIsWithdrawConfirmOpen] = React.useState(false);
+
+  const [optimistic, setOptimistic] = React.useState<
+    | { type: "registered"; registrationId: string; qrToken: string }
+    | { type: "withdrawn" }
+    | null
+  >(null);
+
+  // WHY: Derive optimistic registration and withdrawal state directly from props instead of
+  // syncing via useEffect so DigitalTicketPass opens immediately with the new qrToken without
+  // triggering React 19 cascading-render warnings.
+  const localReg = React.useMemo(() => {
+    if (optimistic?.type === "registered" && !isRegistered) {
+      return {
+        isRegistered: true,
+        registrationId: optimistic.registrationId,
+        qrToken: optimistic.qrToken,
+        status: "confirmed" as const,
+        checkInAt: null,
+      };
+    }
+
+    if (optimistic?.type === "withdrawn" && isRegistered) {
+      return {
+        isRegistered: false,
+        registrationId: undefined,
+        qrToken: "",
+        status: "confirmed" as const,
+        checkInAt: null,
+      };
+    }
+
+    return {
+      isRegistered,
+      registrationId,
+      qrToken,
+      status: registrationStatus,
+      checkInAt,
+    };
+  }, [
+    optimistic,
+    isRegistered,
+    registrationId,
+    qrToken,
+    registrationStatus,
+    checkInAt,
+  ]);
 
   const isFull = registeredCount >= capacity;
   const deadlinePassed = new Date() > new Date(registrationDeadline);
@@ -63,9 +114,15 @@ export function RegistrationActionButton({
         return;
       }
 
-      toast.success("Registration confirmed! Your digital entry pass is ready. 🎟️");
-      router.refresh();
+      setOptimistic({
+        type: "registered",
+        registrationId: res.data.registrationId,
+        qrToken: res.data.qrToken,
+      });
+
+      toast.success("Registration confirmed! Your digital entry pass is ready.");
       setIsPassModalOpen(true);
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An error occurred";
 
@@ -76,11 +133,11 @@ export function RegistrationActionButton({
   };
 
   const handleWithdraw = async () => {
-    if (!registrationId) return;
+    if (!localReg.registrationId) return;
 
     setIsPending(true);
     try {
-      const res = await withdrawFromEvent(registrationId);
+      const res = await withdrawFromEvent(localReg.registrationId);
 
       if (!res.success) {
         toast.danger(res.error?.message ?? "Withdrawal failed");
@@ -88,6 +145,8 @@ export function RegistrationActionButton({
         return;
       }
 
+      setOptimistic({ type: "withdrawn" });
+      setIsWithdrawConfirmOpen(false);
       toast.info("Your registration has been withdrawn. The spot has been released.");
       router.refresh();
     } catch (err: unknown) {
@@ -99,44 +158,96 @@ export function RegistrationActionButton({
     }
   };
 
-  if (isRegistered) {
+  if (localReg.isRegistered) {
+    const isAttended = localReg.status === "attended";
+
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {isAttended ? (
+          <Chip color="accent" size="md" variant="soft">
+            <CheckCircle2 className="mr-1 inline" size={14} />
+            Checked In
+          </Chip>
+        ) : null}
+
         <Button
           size="md"
           variant="primary"
-          onClick={() => setIsPassModalOpen(true)}
+          onPress={() => setIsPassModalOpen(true)}
         >
           <Ticket size={16} />
           View Digital Pass
         </Button>
 
-        {!deadlinePassed && (
+        {!isAttended && !deadlinePassed ? (
           <Button
             className="text-danger hover:bg-danger/10"
             isDisabled={isPending}
             size="md"
             variant="ghost"
-            onClick={handleWithdraw}
+            onPress={() => setIsWithdrawConfirmOpen(true)}
           >
             <LogOut size={16} />
             Withdraw
           </Button>
-        )}
+        ) : null}
 
         <DigitalTicketPass
+          checkInAt={localReg.checkInAt}
           endTime={endTime}
           eventTitle={eventTitle}
           isOpen={isPassModalOpen}
           organizationName={organizationName}
-          qrToken={qrToken}
+          qrToken={localReg.qrToken}
           schoolId={schoolId}
           startTime={startTime}
-          status="confirmed"
+          status={localReg.status}
           studentName={studentName}
           venueName={venueName}
           onOpenChange={setIsPassModalOpen}
         />
+
+        <AlertDialog
+          isOpen={isWithdrawConfirmOpen}
+          onOpenChange={(open) => !open && !isPending && setIsWithdrawConfirmOpen(false)}
+        >
+          <AlertDialog.Backdrop variant="blur">
+            <AlertDialog.Container size="sm">
+              <AlertDialog.Dialog className="border border-warning/30 shadow-xl bg-surface">
+                <AlertDialog.CloseTrigger />
+                <AlertDialog.Header>
+                  <AlertDialog.Icon status="warning" />
+                  <AlertDialog.Heading>Withdraw Registration?</AlertDialog.Heading>
+                </AlertDialog.Header>
+                <AlertDialog.Body>
+                  <p className="text-sm text-foreground/85 leading-relaxed">
+                    Are you sure you want to withdraw from <strong>{eventTitle}</strong>? Your current digital pass will be invalidated and your reserved seat will be released immediately.
+                  </p>
+                </AlertDialog.Body>
+                <AlertDialog.Footer className="flex items-center justify-end gap-2">
+                  <Button
+                    isDisabled={isPending}
+                    size="sm"
+                    variant="tertiary"
+                    onPress={() => setIsWithdrawConfirmOpen(false)}
+                  >
+                    Keep Pass
+                  </Button>
+                  <Button
+                    isDisabled={isPending}
+                    isPending={isPending}
+                    size="sm"
+                    variant="danger"
+                    onPress={handleWithdraw}
+                  >
+                    {isPending ? <Spinner color="current" size="sm" /> : null}
+                    {isPending ? "Withdrawing..." : "Confirm Withdrawal"}
+                  </Button>
+                </AlertDialog.Footer>
+              </AlertDialog.Dialog>
+            </AlertDialog.Container>
+          </AlertDialog.Backdrop>
+        </AlertDialog>
       </div>
     );
   }
@@ -160,11 +271,12 @@ export function RegistrationActionButton({
   return (
     <Button
       isDisabled={isPending}
+      isPending={isPending}
       size="md"
       variant="primary"
-      onClick={handleRegister}
+      onPress={handleRegister}
     >
-      <Ticket size={16} />
+      {isPending ? <Spinner color="current" size="sm" /> : <Ticket size={16} />}
       {isPending ? "Confirming..." : "Register for Event"}
     </Button>
   );

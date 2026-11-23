@@ -5,6 +5,11 @@ import { cache } from "react";
 
 import { createClient } from "@/utils/supabase/server";
 
+type AttendanceJoinRow = {
+  check_in_at: string;
+  check_in_method: "manual" | "qr_scanner";
+};
+
 type RegQueryRow = {
   id: string;
   proposal_id: string;
@@ -14,11 +19,14 @@ type RegQueryRow = {
   event: {
     id: string;
     title: string;
+    status: string;
+    registration_deadline: string;
     start_time: string;
     end_time: string;
-    organizations: { name: string; acronym: string } | null;
+    organizations: { name: string; acronym: string; logo_url: string | null } | null;
     venues: { name: string } | null;
   } | null;
+  attendance: AttendanceJoinRow[] | AttendanceJoinRow | null;
 };
 
 /**
@@ -40,11 +48,14 @@ export const getStudentRegistrations = cache(async (
       event:proposal_id (
         id,
         title,
+        status,
+        registration_deadline,
         start_time,
         end_time,
-        organizations:organization_id (name, acronym),
+        organizations:organization_id (name, acronym, logo_url),
         venues:venue_id (name)
-      )
+      ),
+      attendance:attendance_records (check_in_at, check_in_method)
     `)
     .eq("student_id", studentId)
     .in("status", ["confirmed", "attended"])
@@ -58,19 +69,28 @@ export const getStudentRegistrations = cache(async (
 
   const rows = (data ?? []) as unknown as RegQueryRow[];
 
-  return rows.map((row) => ({
-    registrationId: row.id,
-    eventId: row.proposal_id,
-    eventTitle: row.event?.title ?? "Campus Activity",
-    organizationName: row.event?.organizations?.name ?? "Campus Group",
-    organizationAcronym: row.event?.organizations?.acronym ?? "ORG",
-    venueName: row.event?.venues?.name ?? "Campus Venue",
-    startTime: row.event?.start_time ?? "",
-    endTime: row.event?.end_time ?? "",
-    qrToken: row.qr_token,
-    status: row.status,
-    registeredAt: row.created_at,
-  }));
+  return rows.map((row) => {
+    const att = Array.isArray(row.attendance) ? row.attendance[0] : row.attendance;
+
+    return {
+      registrationId: row.id,
+      eventId: row.proposal_id,
+      eventTitle: row.event?.title ?? "Campus Activity",
+      eventStatus: row.event?.status ?? "approved",
+      registrationDeadline: row.event?.registration_deadline ?? "",
+      organizationName: row.event?.organizations?.name ?? "Campus Group",
+      organizationAcronym: row.event?.organizations?.acronym ?? "ORG",
+      organizationLogoUrl: row.event?.organizations?.logo_url ?? null,
+      venueName: row.event?.venues?.name ?? "Campus Venue",
+      startTime: row.event?.start_time ?? "",
+      endTime: row.event?.end_time ?? "",
+      qrToken: row.qr_token,
+      status: row.status,
+      registeredAt: row.created_at,
+      checkInAt: att?.check_in_at ?? null,
+      checkInMethod: att?.check_in_method ?? null,
+    };
+  });
 });
 
 /**
@@ -79,24 +99,40 @@ export const getStudentRegistrations = cache(async (
 export const getEventRegistrationStatus = cache(async (
   eventId: string,
   studentId: string
-): Promise<{ isRegistered: boolean; registrationId?: string; status?: string }> => {
+): Promise<{
+  isRegistered: boolean;
+  registrationId?: string;
+  status?: "confirmed" | "attended";
+  qrToken?: string;
+  checkInAt?: string | null;
+}> => {
   const supabase = await createClient();
 
   const { data } = await supabase
     .from("event_registrations")
-    .select("id, status")
+    .select("id, status, qr_token, attendance:attendance_records(check_in_at)")
     .eq("proposal_id", eventId)
     .eq("student_id", studentId)
-    .eq("status", "confirmed")
+    .in("status", ["confirmed", "attended"])
     .maybeSingle();
 
   if (!data) {
     return { isRegistered: false };
   }
 
+  const row = data as unknown as {
+    id: string;
+    status: "confirmed" | "attended";
+    qr_token: string;
+    attendance: { check_in_at: string }[] | { check_in_at: string } | null;
+  };
+  const att = Array.isArray(row.attendance) ? row.attendance[0] : row.attendance;
+
   return {
     isRegistered: true,
-    registrationId: data.id,
-    status: data.status,
+    registrationId: row.id,
+    status: row.status,
+    qrToken: row.qr_token,
+    checkInAt: att?.check_in_at ?? null,
   };
 });

@@ -5,30 +5,38 @@ import type { NotificationItem } from "../types";
 import React from "react";
 import NextLink from "next/link";
 import {
-  Card,
   Button,
+  Card,
+  Chip,
+  EmptyState,
+  SearchField,
+  Tabs,
   toast,
 } from "@heroui/react";
 import {
   CheckCheck,
+  Clock,
   ExternalLink,
   Inbox,
-  Clock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
-  markNotificationAsRead,
   markAllNotificationsAsRead,
+  markNotificationAsRead,
 } from "../services/notification_services";
 
 export type NotificationListProps = {
   notifications: NotificationItem[];
 };
 
+type NotificationTab = "all" | "unread";
+
 export function NotificationList({ notifications }: NotificationListProps) {
   const router = useRouter();
   const [readIds, setReadIds] = React.useState<Set<string>>(new Set());
+  const [search, setSearch] = React.useState("");
+  const [tab, setTab] = React.useState<NotificationTab>("all");
   const [isPending, startTransition] = React.useTransition();
 
   const items = React.useMemo(() => {
@@ -39,6 +47,20 @@ export function NotificationList({ notifications }: NotificationListProps) {
   }, [notifications, readIds]);
 
   const unreadCount = items.filter((n) => !n.isRead).length;
+
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return items.filter((n) => {
+      if (tab === "unread" && n.isRead) return false;
+      if (!q) return true;
+
+      return (
+        n.title.toLowerCase().includes(q) ||
+        n.message.toLowerCase().includes(q)
+      );
+    });
+  }, [items, search, tab]);
 
   const handleMarkAsRead = (id: string) => {
     startTransition(async () => {
@@ -68,66 +90,111 @@ export function NotificationList({ notifications }: NotificationListProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full animate-fade-in">
-      <div className="flex items-center justify-between pb-2">
-        <span className="text-xs text-muted">
-          {unreadCount > 0
-            ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-            : "All caught up"}
-        </span>
-        {unreadCount > 0 && (
-          <Button
-            isDisabled={isPending}
-            size="sm"
-            variant="ghost"
-            onPress={handleMarkAllRead}
+    <div className="flex flex-col gap-5 w-full animate-fade-in">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search notifications"
+          className="w-full lg:w-80"
+          name="notification-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search notifications…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Tabs
+            selectedKey={tab}
+            variant="secondary"
+            onSelectionChange={(key) => setTab(String(key) as NotificationTab)}
           >
-            <CheckCheck size={14} />
-            Mark all as read
-          </Button>
-        )}
+            <Tabs.ListContainer>
+              <Tabs.List aria-label="Filter notifications">
+                <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
+                  All ({items.length})
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab className="text-xs whitespace-nowrap" id="unread">
+                  Unread ({unreadCount})
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
+          </Tabs>
+
+          {unreadCount > 0 ? (
+            <Button
+              isDisabled={isPending}
+              size="sm"
+              variant="secondary"
+              onPress={handleMarkAllRead}
+            >
+              <CheckCheck size={14} />
+              Mark all read
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      {items.length === 0 ? (
-        <Card className="border border-divider bg-card/60 p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted/20 text-muted mb-4">
-            <Inbox size={24} />
-          </div>
-          <h3 className="text-base font-semibold text-foreground">
-            No notifications
-          </h3>
-          <p className="text-sm text-muted mt-1 max-w-sm mx-auto">
-            You will receive notifications here regarding proposal reviews, event approvals, registration confirmations, and venue announcements.
-          </p>
+      {filtered.length === 0 ? (
+        <Card className="border border-dashed border-border/60 bg-surface p-10 text-center items-center">
+          <EmptyState className="flex flex-col items-center text-center gap-2">
+            <Inbox className="text-muted size-10" />
+            <h3 className="text-base font-semibold text-foreground">
+              {items.length === 0
+                ? "No Notifications Yet"
+                : tab === "unread" && unreadCount === 0
+                  ? "All Caught Up"
+                  : "No Matching Notifications"}
+            </h3>
+            <p className="text-xs text-muted max-w-sm">
+              {items.length === 0
+                ? "You will receive notifications here regarding proposal reviews, event approvals, registration confirmations, and venue announcements."
+                : tab === "unread" && unreadCount === 0
+                  ? "You have read every notification in your inbox."
+                  : "Try adjusting your search query."}
+            </p>
+          </EmptyState>
         </Card>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {items.map((n) => (
+          {filtered.map((n) => (
             <Card
               key={n.id}
               className={`p-4 border transition-colors ${
                 n.isRead
-                  ? "border-divider bg-card/50"
-                  : "border-primary/40 bg-primary/5"
+                  ? "border-border/30 bg-surface"
+                  : "border-accent/40 bg-accent/5"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 min-w-0">
                   <div
-                    className={`mt-1 h-2 w-2 rounded-full shrink-0 ${
-                      n.isRead ? "bg-transparent" : "bg-primary animate-pulse"
+                    className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
+                      n.isRead ? "bg-transparent" : "bg-accent animate-pulse"
                     }`}
                   />
-                  <div className="flex flex-col gap-1">
-                    <h4
-                      className={`text-sm ${
-                        n.isRead
-                          ? "font-medium text-foreground"
-                          : "font-semibold text-foreground"
-                      }`}
-                    >
-                      {n.title}
-                    </h4>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4
+                        className={`text-sm ${
+                          n.isRead
+                            ? "font-medium text-foreground"
+                            : "font-semibold text-foreground"
+                        }`}
+                      >
+                        {n.title}
+                      </h4>
+                      {!n.isRead ? (
+                        <Chip color="accent" size="sm" variant="soft">
+                          New
+                        </Chip>
+                      ) : null}
+                    </div>
                     <p className="text-xs text-muted whitespace-pre-wrap">
                       {n.message}
                     </p>
@@ -136,20 +203,20 @@ export function NotificationList({ notifications }: NotificationListProps) {
                         <Clock size={11} />
                         {new Date(n.createdAt).toLocaleString()}
                       </span>
-                      {n.link && (
+                      {n.link ? (
                         <NextLink
-                          className="text-primary hover:underline flex items-center gap-1 font-medium"
+                          className="text-accent hover:underline flex items-center gap-1 font-medium"
                           href={n.link}
                         >
                           View Details
                           <ExternalLink size={10} />
                         </NextLink>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
 
-                {!n.isRead && (
+                {!n.isRead ? (
                   <Button
                     className="text-xs shrink-0"
                     isDisabled={isPending}
@@ -159,7 +226,7 @@ export function NotificationList({ notifications }: NotificationListProps) {
                   >
                     Mark read
                   </Button>
-                )}
+                ) : null}
               </div>
             </Card>
           ))}

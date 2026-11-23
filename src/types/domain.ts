@@ -59,13 +59,17 @@ export type Organization = {
   category: string;
   logoUrl: string | null;
   isActive: boolean;
+  governorId: string | null;
+  adviserId: string | null;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type OrganizationMember = {
   id: string;
   organizationId: string;
   userId: string;
+  position: string | null;
   positionTitle: string | null;
   isOfficer: boolean;
   isAdviser: boolean;
@@ -78,6 +82,62 @@ export type Venue = {
   location: string | null;
   capacity: number;
   isActive: boolean;
+  icon: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ActivityType =
+  | "seminar"
+  | "workshop"
+  | "competition"
+  | "assembly"
+  | "outreach"
+  | "cultural"
+  | "sports"
+  | "other";
+
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  seminar: "Seminar / Conference",
+  workshop: "Workshop / Training",
+  competition: "Competition / Hackathon",
+  assembly: "General Assembly / Forum",
+  outreach: "Community Outreach",
+  cultural: "Cultural / Arts Showcase",
+  sports: "Sports / Tournament",
+  other: "Other Campus Activity",
+};
+
+export type AttachmentType = {
+  id: string;
+  name: string;
+  code: string;
+  category?: string | null;
+  description: string | null;
+  isRequired: boolean;
+  isActive: boolean;
+  templateFileName?: string | null;
+  templateFilePath?: string | null;
+  templateFileUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EventAttachment = {
+  id: string;
+  proposalId: string;
+  attachmentTypeId: string | null;
+  attachmentTypeName: string | null;
+  attachmentTypeCode: string | null;
+  attachmentTypeCategory?: string | null;
+  fileName: string;
+  filePath: string;
+  fileUrl: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  uploadedBy: string | null;
+  uploadedByName?: string | null;
   createdAt: string;
 };
 
@@ -88,6 +148,8 @@ export type EventProposal = {
   title: string;
   purpose: string;
   activitiesDesc: string;
+  activityType: string;
+  semesterId: string | null;
   venueId: string;
   startTime: string;
   endTime: string;
@@ -95,6 +157,31 @@ export type EventProposal = {
   capacity: number;
   status: ProposalStatus;
   cancellationReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProposalListItem = {
+  id: string;
+  title: string;
+  purpose: string;
+  activityType?: string;
+  semesterId?: string | null;
+  semesterName?: string | null;
+  organizationId: string;
+  organizationName: string;
+  organizationAcronym: string;
+  venueId: string;
+  venueName: string;
+  venueCapacity: number;
+  startTime: string;
+  endTime: string;
+  registrationDeadline: string;
+  capacity: number;
+  status: string;
+  cancellationReason: string | null;
+  createdById: string | null;
+  creatorName: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -153,4 +240,31 @@ export type UserProfile = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type DepartmentSummary = {
+  id: string;
+  name: string;
+  code: string;
+};
+
+export type Department = DepartmentSummary & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Program = {
+  id: string;
+  departmentId: string;
+  name: string;
+  code: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UserPreferences = {
+  proposalAlerts: boolean;
+  eventReminders: boolean;
+  emailNotifications: boolean;
+  compactSidebarDefault: boolean;
 };
