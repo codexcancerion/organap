@@ -76,11 +76,14 @@ declare
   v_meta jsonb;
   v_rec record;
 begin
-  -- Clear unique school_id and avatar URLs upfront to avoid intermediate collisions.
+  -- Clear unique school_id, avatar URLs, and auth.users emails upfront to avoid intermediate collisions.
   update public.profiles
   set
     school_id = null,
     avatar_url = null;
+
+  update auth.users
+  set email = 'anon-' || id::text || '@organap.invalid';
 
   for v_rec in
     select
