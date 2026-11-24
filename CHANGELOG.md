@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] - 2026-11-24
+
+### Added
+
+- **auth**: add auth callback route and configure production site URLs
+- **organap**: complete event approval, attendance, navigation, and anonymized seed baseline
+- **events**: complete end-to-end implementation of FR-03 through FR-18
+- **navigation**: hide right panel from auth shell while preserving context infrastructure
+- **layout**: introduce standard cardless PageHeader across feature pages
+- **right-panel**: remove active privileges section and badge
+- **sidebar**: integrate profile and signout into header and dedicate footer to collapser
+- **ui**: streamline top navbar, elevate sidebar user header, and simplify 3-KPI dashboard
+- **layout**: enforce 3-pane structure, hide sidebar scrollbar, and apply brand palette
+- **ui**: implement voxsels 3-pane edge layout, hidden sidebar scroller, and primary blue/red/yellow palette
+- **auth**: transition static roles to dynamic django-style groups and permissions
+- **rbac**: implement full dynamic rbac, rls policies, and local supabase offline dev setup
+
+### Changed
+
+- **navigation**: optimize auth session proxy, parallelize auth queries, and add route loading skeletons
+- docs — capture implementation rationale, UI/UX flows, and domain invariants
+- docs — formalize heroui-first and tailwind-first styling policies from voxsels
+
+### Fixed
+
+- **db**: avoid email uniqueness collision in user anonymization migration
+- **users**: replace raw select elements with HeroUI v3 Select and ListBox
+
+### Chore
+
+- **ui**: use Bowlby One SC logo font, remove navbar border, and use Select dropdown for org categories
+- **groups**: tighten card spacing and prevent vertical stretch
+- **groups**: remove card shield icon, add spacing above stats, and remove footer divider border
+- **groups**: move settings gear action to card footer and remove updated timestamp
+- **dashboard**: position kpi card icon in top-right header
+
 ## [0.1.0] - 2026-11-10
 
 ### Added
