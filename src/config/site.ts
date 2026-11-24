@@ -6,7 +6,7 @@ export const siteConfig = {
   tagline: "Student Organization Event Approval & Attendance Management System",
   description:
     "OrGanap centralizes event proposals, two-stage adviser and Student Affairs reviews, venue conflict checking, student event registration, and digital attendance verification.",
-  url: "https://organap.edu",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://organap.vercel.app",
   ogImage: "/og.png",
   author: "OrGanap Team",
   keywords: [
