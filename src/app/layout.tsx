@@ -56,7 +56,7 @@ export default async function RootLayout({
       lang="en"
     >
       <body className="min-h-screen text-foreground bg-background font-sans antialiased">
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+        <Providers initialUser={user} themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col min-h-screen">
             <Navbar unreadCount={unreadCount} user={user} />
             <div className="flex-1">

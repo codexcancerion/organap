@@ -47,10 +47,17 @@ type AuthContextValue = {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}) {
   const router = useRouter();
-  const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = React.useState<AuthUser | null>(initialUser ?? null);
+  const [loading, setLoading] = React.useState(initialUser === undefined);
+  const initialUserRef = React.useRef(initialUser);
   const recoveryHandledRef = React.useRef(false);
 
   const handleRecovery = React.useCallback(() => {
@@ -86,6 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event, session) => {
+        if (
+          event === "INITIAL_SESSION" &&
+          initialUserRef.current !== undefined &&
+          (session?.user?.id ?? null) === (initialUserRef.current?.id ?? null)
+        ) {
+          setLoading(false);
+
+          return;
+        }
+
         void sync(session?.user);
 
         if (event === "PASSWORD_RECOVERY") {

@@ -32,30 +32,33 @@ export async function hydrateAuthUser(
 
   try {
     const supabase = createClient();
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("id, display_name, school_id, avatar_url, is_superuser, is_staff, is_active")
-      .eq("id", baseUser.id)
-      .maybeSingle();
+
+    const [profileRes, userGroupsRes, permsRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, display_name, school_id, avatar_url, is_superuser, is_staff, is_active")
+        .eq("id", baseUser.id)
+        .maybeSingle(),
+      supabase
+        .from("user_groups")
+        .select("groups(name)")
+        .eq("user_id", baseUser.id),
+      supabase.rpc("get_user_permissions", {
+        p_user_id: baseUser.id,
+      }),
+    ]);
+
+    const { data: profile, error } = profileRes;
 
     if (error) {
       console.error("Failed to fetch profile row:", error.message);
     }
 
-    // Fetch user groups
-    const { data: userGroups } = await supabase
-      .from("user_groups")
-      .select("groups(name)")
-      .eq("user_id", baseUser.id);
-
-    const groups: string[] = (userGroups ?? [])
+    const groups: string[] = (userGroupsRes.data ?? [])
       .map((g) => (g.groups as { name: string } | null)?.name)
       .filter((name): name is string => typeof name === "string");
 
-    // Fetch effective permissions
-    const { data: permsData, error: permsError } = await supabase.rpc("get_user_permissions", {
-      p_user_id: baseUser.id,
-    });
+    const { data: permsData, error: permsError } = permsRes;
 
     if (permsError) {
       console.error("Failed to fetch user permissions:", permsError.message);
@@ -121,15 +124,31 @@ export async function signInWithPassword(
   return { data: user, error: null };
 }
 
+function getAuthSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+
+  if (configured) {
+    return configured;
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return "https://organap.vercel.app";
+}
+
 /** Sign up a new campus user with profile metadata. */
 export async function signUpWithPassword(
   input: SignUpInput,
 ): Promise<SignUpResult> {
   const supabase = createClient();
+  const emailRedirectTo = `${getAuthSiteUrl()}/auth/callback`;
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
+      emailRedirectTo,
       data: {
         display_name: input.displayName,
         school_id: input.schoolId ?? null,
@@ -167,10 +186,7 @@ export async function requestPasswordReset(
   input: ResetPasswordInput,
 ): Promise<AuthError | null> {
   const supabase = createClient();
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/reset-password`
-      : undefined;
+  const redirectTo = `${getAuthSiteUrl()}/auth/callback?next=/reset-password`;
 
   const { error } = await supabase.auth.resetPasswordForEmail(input.email, {
     redirectTo,

@@ -21,39 +21,42 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
 
   const supabase = await createClient();
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { data: claimsData, error: authError } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const userId = typeof claims?.sub === "string" ? claims.sub : null;
 
-  if (authError || !authUser) {
+  if (authError || !userId) {
     return null;
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, display_name, school_id, avatar_url, is_superuser, is_staff, is_active")
-    .eq("id", authUser.id)
-    .maybeSingle();
+  const email = typeof claims?.email === "string" ? claims.email : "";
+
+  const [profileRes, userGroupsRes, permsRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, display_name, school_id, avatar_url, is_superuser, is_staff, is_active")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("user_groups")
+      .select("groups(name)")
+      .eq("user_id", userId),
+    supabase.rpc("get_user_permissions", {
+      p_user_id: userId,
+    }),
+  ]);
+
+  const { data: profile, error: profileError } = profileRes;
 
   if (profileError) {
     console.error("Failed to fetch profile for auth user:", profileError.message);
   }
 
-  // Fetch groups
-  const { data: userGroups } = await supabase
-    .from("user_groups")
-    .select("groups(name)")
-    .eq("user_id", authUser.id);
-
-  const groups: string[] = (userGroups ?? [])
+  const groups: string[] = (userGroupsRes.data ?? [])
     .map((g) => (g.groups as { name: string } | null)?.name)
     .filter((name): name is string => typeof name === "string");
 
-  // Fetch effective permissions via Postgres RPC
-  const { data: permsData, error: permsError } = await supabase.rpc("get_user_permissions", {
-    p_user_id: authUser.id,
-  });
+  const { data: permsData, error: permsError } = permsRes;
 
   if (permsError) {
     console.error("Failed to fetch user permissions:", permsError.message);
@@ -64,8 +67,8 @@ export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
     .filter((code): code is string => typeof code === "string");
 
   return {
-    id: authUser.id,
-    email: authUser.email ?? "",
+    id: userId,
+    email,
     displayName: profile?.display_name ? profile.display_name.trim() || null : null,
     schoolId: profile?.school_id ?? null,
     avatarUrl: profile?.avatar_url ?? null,
