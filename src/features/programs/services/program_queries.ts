@@ -4,6 +4,10 @@ import type { ProgramListItem } from "../types";
 
 import { cache } from "react";
 
+import {
+  EMPTY_DEPARTMENT_METRICS,
+  getDepartmentActivityMap,
+} from "@/utils/department_activity";
 import { createClient } from "@/utils/supabase/server";
 
 type ProgramQueryRow = {
@@ -46,20 +50,28 @@ export const getPrograms = cache(async (): Promise<ProgramListItem[]> => {
   }
 
   const rows = (data ?? []) as unknown as ProgramQueryRow[];
+  const deptIds = Array.from(new Set(rows.map((r) => r.department_id).filter(Boolean)));
+  const activityMap = await getDepartmentActivityMap(deptIds);
 
-  return rows.map((row) => ({
-    id: row.id,
-    departmentId: row.department_id,
-    name: row.name,
-    code: row.code,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    department: row.department ?? {
-      id: row.department_id,
-      name: "Unassigned Department",
-      code: "DEPT",
-    },
-  }));
+  return rows.map((row) => {
+    const activity = activityMap.get(row.department_id);
+
+    return {
+      id: row.id,
+      departmentId: row.department_id,
+      name: row.name,
+      code: row.code,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      department: row.department ?? {
+        id: row.department_id,
+        name: "Unassigned Department",
+        code: "DEPT",
+      },
+      activityMetrics: activity?.metrics ?? EMPTY_DEPARTMENT_METRICS,
+      organizations: activity?.organizations ?? [],
+    };
+  });
 });
 
 /**
@@ -88,6 +100,8 @@ export const getProgramById = cache(
     }
 
     const row = data as unknown as ProgramQueryRow;
+    const activityMap = await getDepartmentActivityMap([row.department_id]);
+    const activity = activityMap.get(row.department_id);
 
     return {
       id: row.id,
@@ -101,6 +115,9 @@ export const getProgramById = cache(
         name: "Unassigned Department",
         code: "DEPT",
       },
+      activityMetrics: activity?.metrics ?? EMPTY_DEPARTMENT_METRICS,
+      organizations: activity?.organizations ?? [],
+      recentEvents: activity?.recentEvents ?? [],
     };
   },
 );

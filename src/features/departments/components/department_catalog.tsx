@@ -13,9 +13,13 @@ import {
 } from "@heroui/react";
 import {
   ArrowRight,
+  CalendarCheck2,
   Landmark,
   Plus,
   Settings,
+  Ticket,
+  UserCheck,
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -97,6 +101,36 @@ export function DepartmentCatalog({
   );
   const canOpenSettings = permissions.canChange || permissions.canDelete;
 
+  const summaryKpis = React.useMemo(() => {
+    let organizationsCount = 0;
+    let eventsCount = 0;
+    let registrationsCount = 0;
+    let attendancesCount = 0;
+
+    for (const dept of departments) {
+      const m = dept.activityMetrics;
+
+      if (!m) continue;
+      organizationsCount += m.organizationsCount;
+      eventsCount += m.eventsCount;
+      registrationsCount += m.registrationsCount;
+      attendancesCount += m.attendancesCount;
+    }
+
+    const attendanceRate =
+      registrationsCount > 0
+        ? Math.round((attendancesCount / registrationsCount) * 100)
+        : 0;
+
+    return {
+      organizationsCount,
+      eventsCount,
+      registrationsCount,
+      attendancesCount,
+      attendanceRate,
+    };
+  }, [departments]);
+
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
       <PageHeader
@@ -114,9 +148,74 @@ export function DepartmentCatalog({
             {departments.length === 1 ? "Department" : "Departments"}
           </Chip>
         }
-        description="Manage institutional schools and academic departments, their acronym codes, and their degree programs."
+        description="Manage institutional schools and academic departments, their mapped organizations, and campus event participation."
         title="Academic Departments"
       />
+
+      {/* Department Activity KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="p-4 gap-2 border border-border/40 bg-surface">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Mapped Orgs
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+              <Users size={15} />
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+            {summaryKpis.organizationsCount}
+          </p>
+          <p className="text-xs text-muted">Linked student organizations</p>
+        </Card>
+
+        <Card className="p-4 gap-2 border border-border/40 bg-surface">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Dept Events
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <CalendarCheck2 size={15} />
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+            {summaryKpis.eventsCount}
+          </p>
+          <p className="text-xs text-muted">Approved college activities</p>
+        </Card>
+
+        <Card className="p-4 gap-2 border border-border/40 bg-surface">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Student Passes
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
+              <Ticket size={15} />
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+            {summaryKpis.registrationsCount}
+          </p>
+          <p className="text-xs text-muted">Active event registrations</p>
+        </Card>
+
+        <Card className="p-4 gap-2 border border-border/40 bg-surface">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Check-Ins
+            </span>
+            <span className="w-8 h-8 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0">
+              <UserCheck size={15} />
+            </span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+            {summaryKpis.attendancesCount}
+          </p>
+          <p className="text-xs text-muted">
+            {summaryKpis.attendanceRate}% verified attendance rate
+          </p>
+        </Card>
+      </div>
 
       {/* Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -165,7 +264,7 @@ export function DepartmentCatalog({
                   </div>
                 </Card.Header>
 
-                <Card.Content className="flex flex-col gap-2">
+                <Card.Content className="flex flex-col gap-3">
                   {permissions.canViewPrograms ? (
                     topPrograms.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
@@ -208,6 +307,29 @@ export function DepartmentCatalog({
                       </Chip>
                     </div>
                   )}
+
+                  {dept.activityMetrics ? (
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/20 text-center">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold tabular-nums text-foreground">
+                          {dept.activityMetrics.eventsCount}
+                        </span>
+                        <span className="text-[10px] text-muted">Events</span>
+                      </div>
+                      <div className="flex flex-col border-x border-border/20">
+                        <span className="text-xs font-bold tabular-nums text-foreground">
+                          {dept.activityMetrics.registrationsCount}
+                        </span>
+                        <span className="text-[10px] text-muted">Passes</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold tabular-nums text-foreground">
+                          {dept.activityMetrics.attendancesCount}
+                        </span>
+                        <span className="text-[10px] text-muted">Check-ins</span>
+                      </div>
+                    </div>
+                  ) : null}
                 </Card.Content>
 
                 <Card.Footer className="flex items-center justify-between gap-2 pt-2 border-t border-border/20">

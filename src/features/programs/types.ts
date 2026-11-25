@@ -1,8 +1,17 @@
 // Feature types for Academic Programs in OrGanap.
-import type { DepartmentSummary, Program } from "@/types/domain";
+import type {
+  DepartmentActivityMetrics,
+  DepartmentEventSummary,
+  DepartmentOrganizationSummary,
+  DepartmentSummary,
+  Program,
+} from "@/types/domain";
 
 export type ProgramListItem = Program & {
   department: DepartmentSummary;
+  activityMetrics?: DepartmentActivityMetrics;
+  organizations?: DepartmentOrganizationSummary[];
+  recentEvents?: DepartmentEventSummary[];
 };
 
 export type ProgramFormValues = {

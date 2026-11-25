@@ -3,6 +3,10 @@ import type { DepartmentDetail, DepartmentListItem } from "../types";
 
 import { cache } from "react";
 
+import {
+  EMPTY_DEPARTMENT_METRICS,
+  getDepartmentActivityMap,
+} from "@/utils/department_activity";
 import { createClient } from "@/utils/supabase/server";
 
 type DepartmentRow = {
@@ -46,11 +50,13 @@ export const getDepartments = cache(async (): Promise<DepartmentListItem[]> => {
   }
 
   const rows = (data ?? []) as unknown as DepartmentRow[];
+  const activityMap = await getDepartmentActivityMap(rows.map((r) => r.id));
 
   return rows.map((row) => {
     const programs = [...(row.programs ?? [])].sort((a, b) =>
       a.code.localeCompare(b.code),
     );
+    const activity = activityMap.get(row.id);
 
     return {
       id: row.id,
@@ -64,6 +70,8 @@ export const getDepartments = cache(async (): Promise<DepartmentListItem[]> => {
         name: p.name,
         code: p.code,
       })),
+      activityMetrics: activity?.metrics ?? EMPTY_DEPARTMENT_METRICS,
+      organizations: activity?.organizations ?? [],
     };
   });
 });
@@ -75,24 +83,28 @@ export const getDepartmentById = cache(
   async (id: string): Promise<DepartmentDetail | null> => {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("departments")
-      .select(`
-        id,
-        name,
-        code,
-        created_at,
-        updated_at,
-        programs (id, department_id, name, code, created_at, updated_at)
-      `)
-      .eq("id", id)
-      .single();
+    const [{ data, error }, activityMap] = await Promise.all([
+      supabase
+        .from("departments")
+        .select(`
+          id,
+          name,
+          code,
+          created_at,
+          updated_at,
+          programs (id, department_id, name, code, created_at, updated_at)
+        `)
+        .eq("id", id)
+        .single(),
+      getDepartmentActivityMap([id]),
+    ]);
 
     if (error || !data) {
       return null;
     }
 
     const row = data as unknown as DepartmentRow;
+    const activity = activityMap.get(row.id);
 
     const programs = [...(row.programs ?? [])]
       .sort((a, b) => a.code.localeCompare(b.code))
@@ -112,6 +124,9 @@ export const getDepartmentById = cache(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       programs,
+      activityMetrics: activity?.metrics ?? EMPTY_DEPARTMENT_METRICS,
+      organizations: activity?.organizations ?? [],
+      recentEvents: activity?.recentEvents ?? [],
     };
   },
 );

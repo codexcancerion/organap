@@ -249,6 +249,35 @@ export type DepartmentSummary = {
   code: string;
 };
 
+export type DepartmentActivityMetrics = {
+  organizationsCount: number;
+  eventsCount: number;
+  totalProposalsCount: number;
+  registrationsCount: number;
+  attendancesCount: number;
+  attendanceRate: number;
+};
+
+export type DepartmentOrganizationSummary = {
+  id: string;
+  name: string;
+  acronym: string;
+  slug: string;
+  category: string;
+  logoUrl: string | null;
+};
+
+export type DepartmentEventSummary = {
+  id: string;
+  title: string;
+  organizationAcronym: string;
+  venueName: string;
+  startTime: string;
+  status: string;
+  registrationsCount: number;
+  attendancesCount: number;
+};
+
 export type Department = DepartmentSummary & {
   createdAt: string;
   updatedAt: string;
