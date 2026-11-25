@@ -34,7 +34,7 @@ const mockUser = {
   isSuperuser: false,
   isStaff: false,
   isActive: true,
-  groups: ["Student Organization Officers"],
+  groups: ["Student Organization Officer"],
   permissions: ["proposals.create", "events.view"],
 };
 
@@ -96,7 +96,7 @@ describe("<ProfileView />", () => {
     expect(screen.getByText("Computer Science Society")).toBeInTheDocument();
     expect(screen.getByText("CSS")).toBeInTheDocument();
     expect(screen.getByText("President")).toBeInTheDocument();
-    expect(screen.getByText("Student Organization Officers")).toBeInTheDocument();
+    expect(screen.getByText("Student Organization Officer")).toBeInTheDocument();
     expect(screen.getByText("proposals.create")).toBeInTheDocument();
   });
 });

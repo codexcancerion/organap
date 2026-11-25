@@ -69,8 +69,12 @@ export async function updateGroup(input: UpdateGroupInput): Promise<ServiceResul
 /**
  * Delete a custom group. Protected system groups cannot be deleted.
  */
-export async function deleteGroup(groupId: string, groupName: string): Promise<ServiceResult> {
-  if (isProtectedSystemGroup(groupName)) {
+export async function deleteGroup(
+  groupId: string,
+  groupName: string,
+  isSystem?: boolean,
+): Promise<ServiceResult> {
+  if (isSystem || isProtectedSystemGroup(groupName)) {
     return {
       success: false,
       data: null,

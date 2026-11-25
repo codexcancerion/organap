@@ -32,14 +32,32 @@ export type PermissionModuleGroup = {
 };
 
 export const PROTECTED_SYSTEM_GROUPS = [
-  "Students",
-  "Student Organization Officers",
-  "Faculty Advisers",
+  "Student",
+  "Student Organization Officer",
+  "Faculty Adviser",
   "Student Affairs",
 ] as const;
+
+const LEGACY_PROTECTED_GROUP_NAMES = [
+  "students",
+  "student organization officers",
+  "faculty advisers",
+];
 
 export type ProtectedSystemGroupName = (typeof PROTECTED_SYSTEM_GROUPS)[number];
 
 export function isProtectedSystemGroup(name: string): boolean {
-  return PROTECTED_SYSTEM_GROUPS.includes(name as ProtectedSystemGroupName);
+  const normalized = name.trim().toLowerCase();
+
+  return (
+    PROTECTED_SYSTEM_GROUPS.some((g) => g.toLowerCase() === normalized) ||
+    LEGACY_PROTECTED_GROUP_NAMES.includes(normalized)
+  );
+}
+
+export function isSystemGroupRecord(group: {
+  name: string;
+  isSystem?: boolean;
+}): boolean {
+  return Boolean(group.isSystem) || isProtectedSystemGroup(group.name);
 }

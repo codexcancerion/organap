@@ -22,7 +22,7 @@ vi.mock("@/contexts/auth_context", () => ({
 }));
 
 const mockGroups: UserGroup[] = [
-  { id: "g1", name: "Students", description: "All students" },
+  { id: "g1", name: "Student", description: "All students" },
   { id: "g2", name: "Student Affairs", description: "Admin body" },
 ];
 
@@ -74,7 +74,7 @@ describe("<UserTable />", () => {
     expect(screen.getByText(/juan\.delacruz@kcp\.edu\.ph/)).toBeInTheDocument();
     expect(screen.getByText(/CIT SBO/)).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.getAllByText("Students").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Student").length).toBeGreaterThanOrEqual(1);
 
     expect(screen.getByText("Maria Santos")).toBeInTheDocument();
     expect(screen.getByText(/ID: 2026-0002/)).toBeInTheDocument();

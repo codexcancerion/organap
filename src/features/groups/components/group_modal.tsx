@@ -19,7 +19,7 @@ import { Shield, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { createGroup, updateGroup } from "@/features/groups/services/group_services";
-import { isProtectedSystemGroup } from "@/features/groups/types";
+import { isSystemGroupRecord } from "@/features/groups/types";
 
 export type GroupModalProps = {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export function GroupModal({
   const [pending, setPending] = React.useState(false);
 
   const isEditing = Boolean(groupToEdit);
-  const isSystemGroup = isEditing && groupToEdit ? isProtectedSystemGroup(groupToEdit.name) : false;
+  const isSystemGroup = isEditing && groupToEdit ? isSystemGroupRecord(groupToEdit) : false;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

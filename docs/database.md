@@ -33,7 +33,7 @@ public.venues ◄───────────────── public.even
 OrGanap enforces **dynamic, fine-grained access control** governed by groups and permissions rather than rigid, hardcoded static database role enums:
 
 1. **`permissions`**: Standardized granular permissions (e.g. `proposals.create`, `proposals.endorse`, `proposals.approve`, `organizations.manage_members`, `venues.create`, `attendance.verify`).
-2. **`groups`**: Dynamic user groups (e.g. *Student Affairs*, *Faculty Advisers*, *Student Organization Officers*, *Students*, or any custom committee created by administrators).
+2. **`groups`**: Dynamic user groups (e.g. *Student Affairs*, *Faculty Adviser*, *Student Organization Officer*, *Student*, or any custom committee created by administrators).
 3. **`group_permissions`**: Maps permissions to groups.
 4. **`user_groups`**: Assigns users to one or multiple groups.
 5. **`user_permissions`**: Allows direct permission grants to individual users.
@@ -77,8 +77,9 @@ Dynamic collections of permissions.
 | Column | Type | Constraints / Defaults | Notes |
 | :--- | :--- | :--- | :--- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` | Group ID |
-| `name` | `text` | UNIQUE, NOT NULL | E.g. `Student Affairs`, `Faculty Advisers`, `Students` |
+| `name` | `text` | UNIQUE, NOT NULL | E.g. `Student Affairs`, `Faculty Adviser`, `Student` |
 | `description` | `text` | nullable | Group scope description |
+| `is_system` | `boolean` | NOT NULL, default `false` | Locks the 4 initial groups from deletion via `protect_system_groups` trigger |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` | Creation timestamp |
 | `updated_at` | `timestamptz` | NOT NULL, default `now()` | Last update timestamp |
 

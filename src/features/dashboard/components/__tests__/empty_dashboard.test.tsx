@@ -17,7 +17,7 @@ describe("<EmptyDashboard />", () => {
       isSuperuser: false,
       isStaff: false,
       isActive: true,
-      groups: ["Students"],
+      groups: ["Student"],
       permissions: ["events.view", "events.register"],
     };
 
@@ -56,7 +56,7 @@ describe("<EmptyDashboard />", () => {
     render(<EmptyDashboard metrics={metrics} user={studentUser} />);
 
     expect(screen.getByText("Hello, Juan Dela Cruz!")).toBeInTheDocument();
-    expect(screen.getByText("Students")).toBeInTheDocument();
+    expect(screen.getByText("Student")).toBeInTheDocument();
     expect(screen.getByText("My Registrations")).toBeInTheDocument();
     expect(screen.getByText("Browse Events")).toBeInTheDocument();
     expect(screen.getAllByText("CIT Tech Summit").length).toBeGreaterThanOrEqual(2);
@@ -73,7 +73,7 @@ describe("<EmptyDashboard />", () => {
       isSuperuser: false,
       isStaff: false,
       isActive: true,
-      groups: ["Student Organization Officers"],
+      groups: ["Student Organization Officer"],
       permissions: ["proposals.view", "proposals.create", "proposals.change"],
     };
 
@@ -102,7 +102,7 @@ describe("<EmptyDashboard />", () => {
     render(<EmptyDashboard metrics={metrics} user={officerUser} />);
 
     expect(screen.getByText("Hello, Maria Santos!")).toBeInTheDocument();
-    expect(screen.getByText("Student Organization Officers")).toBeInTheDocument();
+    expect(screen.getByText("Student Organization Officer")).toBeInTheDocument();
     expect(screen.getByText("My Draft Proposals")).toBeInTheDocument();
     expect(screen.getByText("Org Registrations")).toBeInTheDocument();
     expect(screen.getByText("Draft New Proposal")).toBeInTheDocument();

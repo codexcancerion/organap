@@ -59,7 +59,7 @@ const studentAccount: AuthUser = {
   isSuperuser: false,
   isStaff: false,
   isActive: true,
-  groups: ["Students"],
+  groups: ["Student"],
   permissions: ["events.register"],
 };
 

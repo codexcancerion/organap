@@ -28,7 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { deleteGroup } from "@/features/groups/services/group_services";
-import { isProtectedSystemGroup } from "@/features/groups/types";
+import { isSystemGroupRecord } from "@/features/groups/types";
 import { PageHeader } from "@/components/layout/page_header";
 
 import { GroupModal } from "./group_modal";
@@ -80,7 +80,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
   };
 
   const handleRequestDelete = (group: AdminGroupListItem) => {
-    if (isProtectedSystemGroup(group.name)) {
+    if (isSystemGroupRecord(group)) {
       toast.danger("Action Prohibited", {
         description: `System group "${group.name}" is essential to OrGanap and cannot be deleted.`,
       });
@@ -96,7 +96,11 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
 
     setIsDeleting(true);
     try {
-      const res = await deleteGroup(deleteTarget.id, deleteTarget.name);
+      const res = await deleteGroup(
+        deleteTarget.id,
+        deleteTarget.name,
+        deleteTarget.isSystem,
+      );
 
       if (!res.success) {
         toast.danger("Failed to delete group", { description: res.error.message });
@@ -158,7 +162,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
       {filteredGroups.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           {filteredGroups.map((group) => {
-            const isSystem = isProtectedSystemGroup(group.name);
+            const isSystem = isSystemGroupRecord(group);
 
             return (
               <Card
