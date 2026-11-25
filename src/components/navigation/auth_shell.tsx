@@ -19,7 +19,7 @@ export function AuthShell({
 }) {
   return (
     <RightPanelProvider>
-      <div className="flex w-full min-h-[calc(100vh-5rem)] px-2 sm:px-4 py-4 gap-4 items-start justify-between">
+      <div className="flex w-full min-h-[calc(100vh-5rem)] px-3 sm:px-4 py-4 gap-4 items-start justify-between">
         <Sidebar unreadCount={unreadCount} />
         <main className="flex-1 min-w-0 max-w-5xl mx-auto w-full flex flex-col">
           {children}

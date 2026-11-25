@@ -267,6 +267,7 @@ export function ProposalDetailView({
             )}
           </div>
         }
+        actionsLayout="stacked"
         badge={<ProposalStatusChip status={proposal.status} />}
         breadcrumbs={[
           { label: "Back to Events & Proposals", href: "/events" },

@@ -25,6 +25,12 @@ export type PageHeaderProps = {
   meta?: React.ReactNode;
   /** Action buttons or primary controls aligned to the rightmost edge (never KPIs) */
   actions?: React.ReactNode;
+  /**
+   * Controls how actions sit relative to the title block:
+   * - "inline" (default): sits beside the title when space allows, wrapping cleanly below on narrow widths
+   * - "stacked": renders actions in a dedicated full-width toolbar row below the title (ideal for detail pages with 3+ actions)
+   */
+  actionsLayout?: "inline" | "stacked";
   /** Optional class name overrides */
   className?: string;
 };
@@ -42,6 +48,7 @@ export function PageHeader({
   description,
   meta,
   actions,
+  actionsLayout = "inline",
   className,
 }: PageHeaderProps) {
   return (
@@ -75,7 +82,7 @@ export function PageHeader({
                 ) : (
                   <span
                     aria-current={isLast ? "page" : undefined}
-                    className="text-foreground font-medium truncate max-w-[240px] sm:max-w-sm"
+                    className="text-foreground font-medium truncate max-w-[200px] sm:max-w-sm"
                   >
                     {item.label}
                   </span>
@@ -86,14 +93,26 @@ export function PageHeader({
         </nav>
       ) : null}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-        <div className="flex items-start sm:items-center gap-4 min-w-0">
+      <div
+        className={clsx(
+          "flex w-full",
+          actionsLayout === "stacked"
+            ? "flex-col gap-4"
+            : "flex-wrap items-start justify-between gap-x-6 gap-y-4",
+        )}
+      >
+        <div
+          className={clsx(
+            "flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0",
+            actionsLayout === "inline" && "flex-1 min-w-[min(100%,280px)]",
+          )}
+        >
           {media ? <div className="shrink-0">{media}</div> : null}
 
-          <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
               {typeof title === "string" ? (
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-snug break-words">
                   {title}
                 </h1>
               ) : (
@@ -123,7 +142,14 @@ export function PageHeader({
         </div>
 
         {actions ? (
-          <div className="flex flex-wrap items-center gap-2 shrink-0 md:ml-auto">
+          <div
+            className={clsx(
+              "flex flex-wrap items-center gap-2 max-w-full",
+              actionsLayout === "stacked"
+                ? "pt-3 border-t border-border/25 w-full"
+                : "sm:justify-end",
+            )}
+          >
             {actions}
           </div>
         ) : null}

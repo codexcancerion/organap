@@ -6,20 +6,32 @@ import type { AuthUser } from "@/types";
 
 import * as React from "react";
 import NextLink from "next/link";
-import { usePathname } from "next/navigation";
-import { Button, Drawer, useOverlayState } from "@heroui/react";
+import { usePathname, useRouter } from "next/navigation";
+import { Button, Chip, Drawer, useOverlayState } from "@heroui/react";
 import {
-  Menu,
-  CalendarCheck2,
-  Users,
-  LogIn,
-  UserPlus,
   Bell,
+  Building2,
+  CalendarCheck2,
+  CalendarRange,
+  CheckCircle2,
+  GraduationCap,
+  Landmark,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Menu,
+  Paperclip,
+  Settings,
+  ShieldAlert,
+  Ticket,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import clsx from "clsx";
 
 import { ThemeSwitch } from "@/components/ui/theme-switch";
 import { Logo } from "@/components/ui/logo";
+import { createClient } from "@/utils/supabase/client";
 
 import { CommandSearch } from "./command_search";
 import { NavBreadcrumbs } from "./nav_breadcrumbs";
@@ -32,7 +44,104 @@ export const Navbar = ({
   unreadCount?: number;
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const drawerState = useOverlayState({ defaultOpen: false });
+
+  const hasPerm = (code: string) =>
+    Boolean(user?.isSuperuser || user?.permissions?.includes(code));
+
+  const authMobileSections = React.useMemo(() => {
+    if (!user) return [];
+
+    const canManageAttendance =
+      user.isSuperuser ||
+      user.isStaff ||
+      hasPerm("attendance.verify") ||
+      hasPerm("attendance.view") ||
+      hasPerm("reports.view") ||
+      hasPerm("reports.export");
+
+    const canManageUsers =
+      user.isSuperuser ||
+      user.isStaff ||
+      hasPerm("users.view") ||
+      hasPerm("users.manage");
+
+    const canManageGroups =
+      user.isSuperuser ||
+      user.isStaff ||
+      hasPerm("groups.view") ||
+      hasPerm("groups.manage");
+
+    const sections = [
+      {
+        title: "Overview",
+        items: [
+          { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+          {
+            label: "Notifications",
+            href: "/notifications",
+            icon: Bell,
+            badge: unreadCount,
+          },
+        ],
+      },
+      {
+        title: "Events",
+        items: [
+          { label: "Events", href: "/events", icon: CalendarCheck2 },
+          { label: "My Passes", href: "/registrations", icon: Ticket },
+          ...(canManageAttendance
+            ? [{ label: "Attendance", href: "/attendance", icon: CheckCircle2 }]
+            : []),
+        ],
+      },
+      {
+        title: "Institution",
+        items: [
+          { label: "Organizations", href: "/organizations", icon: Users },
+          { label: "Venues", href: "/venues", icon: Building2 },
+          ...(hasPerm("attachments.view")
+            ? [{ label: "Attachments", href: "/attachments", icon: Paperclip }]
+            : []),
+          ...(hasPerm("semesters.view")
+            ? [{ label: "Semesters", href: "/semesters", icon: CalendarRange }]
+            : []),
+          ...(hasPerm("departments.view")
+            ? [{ label: "Departments", href: "/departments", icon: Landmark }]
+            : []),
+          ...(hasPerm("programs.view")
+            ? [{ label: "Programs", href: "/programs", icon: GraduationCap }]
+            : []),
+        ],
+      },
+    ];
+
+    const adminItems = [
+      ...(canManageUsers
+        ? [{ label: "Users", href: "/admin/users", icon: Users }]
+        : []),
+      ...(canManageGroups
+        ? [{ label: "Groups", href: "/admin/groups", icon: ShieldAlert }]
+        : []),
+    ];
+
+    if (adminItems.length > 0) {
+      sections.push({ title: "Administration", items: adminItems });
+    }
+
+    return sections;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, unreadCount]);
+
+  const handleMobileSignOut = async () => {
+    drawerState.close();
+    const supabase = createClient();
+
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   const publicNavItems = [
     {
@@ -53,11 +162,23 @@ export const Navbar = ({
     <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md">
       <div
         className={clsx(
-          "flex h-16 items-center justify-between gap-4 px-4 sm:px-6",
+          "flex h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6",
           user ? "w-full" : "container mx-auto max-w-7xl",
         )}
       >
-        <div className={clsx("flex items-center min-w-0", user ? "gap-3 flex-1" : "gap-8")}>
+        <div className={clsx("flex items-center min-w-0", user ? "gap-2 sm:gap-3 flex-1" : "gap-8")}>
+          {user ? (
+            <Button
+              isIconOnly
+              aria-label="Open navigation menu"
+              className="md:hidden shrink-0"
+              size="sm"
+              variant="ghost"
+              onPress={() => drawerState.toggle()}
+            >
+              <Menu size={20} />
+            </Button>
+          ) : null}
           <Logo />
           {user && <NavBreadcrumbs />}
           {!user && (
@@ -81,7 +202,7 @@ export const Navbar = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {user && <CommandSearch user={user} />}
           {user && (
             <NextLink
@@ -135,6 +256,98 @@ export const Navbar = ({
           )}
         </div>
       </div>
+
+      {/* Mobile Drawer (Authenticated users on < md viewports) */}
+      {user ? (
+        <Drawer isOpen={drawerState.isOpen} onOpenChange={drawerState.setOpen}>
+          <Drawer.Backdrop variant="blur">
+            <Drawer.Content placement="left">
+              <Drawer.Dialog
+                aria-label="Workspace Navigation"
+                className="!w-[85vw] !max-w-xs !px-4 !py-5 bg-surface flex flex-col"
+              >
+                <Drawer.CloseTrigger onPress={() => drawerState.close()} />
+                <Drawer.Header className="flex items-center justify-between border-b border-border/30 pb-3">
+                  <Logo />
+                </Drawer.Header>
+
+                <Drawer.Body className="py-4 flex flex-col gap-4 overflow-y-auto flex-1">
+                  <NextLink
+                    className="flex flex-col gap-0.5 p-3 rounded-2xl bg-default/10 hover:bg-default/20 transition-colors"
+                    href="/profile"
+                    onClick={() => drawerState.close()}
+                  >
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {user.displayName || user.email}
+                    </span>
+                    <span className="text-xs text-muted truncate">
+                      {user.schoolId || user.email}
+                    </span>
+                  </NextLink>
+
+                  <nav className="flex flex-col gap-4">
+                    {authMobileSections.map((section) => (
+                      <div key={section.title} className="flex flex-col gap-1">
+                        <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted/80">
+                          {section.title}
+                        </span>
+                        {section.items.map((item) => {
+                          const isActive =
+                            pathname === item.href ||
+                            pathname.startsWith(item.href + "/");
+                          const Icon = item.icon;
+
+                          return (
+                            <NextLink
+                              key={item.href}
+                              className={clsx(
+                                "flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                                isActive
+                                  ? "bg-accent/15 text-accent font-semibold"
+                                  : "text-muted hover:text-foreground hover:bg-default/15",
+                              )}
+                              href={item.href}
+                              onClick={() => drawerState.close()}
+                            >
+                              <Icon className="shrink-0" size={17} />
+                              <span className="truncate flex-1">{item.label}</span>
+                              {"badge" in item && item.badge && item.badge > 0 ? (
+                                <Chip color="accent" size="sm" variant="soft">
+                                  {item.badge > 99 ? "99+" : item.badge}
+                                </Chip>
+                              ) : null}
+                            </NextLink>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </nav>
+                </Drawer.Body>
+
+                <Drawer.Footer className="flex flex-col gap-2 pt-3 border-t border-border/30 mt-auto">
+                  <NextLink
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-muted hover:text-foreground hover:bg-default/15 transition-colors"
+                    href="/settings"
+                    onClick={() => drawerState.close()}
+                  >
+                    <Settings size={17} />
+                    Settings
+                  </NextLink>
+                  <Button
+                    className="w-full justify-start text-danger hover:bg-danger/10"
+                    size="sm"
+                    variant="ghost"
+                    onPress={handleMobileSignOut}
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </Button>
+                </Drawer.Footer>
+              </Drawer.Dialog>
+            </Drawer.Content>
+          </Drawer.Backdrop>
+        </Drawer>
+      ) : null}
 
       {/* Mobile Drawer (Public visitors only) */}
       {!user && (

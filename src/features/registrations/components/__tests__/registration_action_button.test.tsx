@@ -65,7 +65,7 @@ describe("<RegistrationActionButton />", () => {
     });
   });
 
-  it("shows Checked In state and hides Withdraw when registrationStatus is attended", () => {
+  it("keeps actions button-only and hides Withdraw when registrationStatus is attended", () => {
     render(
       <RegistrationActionButton
         capacity={50}
@@ -86,7 +86,7 @@ describe("<RegistrationActionButton />", () => {
       />
     );
 
-    expect(screen.getByText("Checked In")).toBeInTheDocument();
+    expect(screen.queryByText("Checked In")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /view digital pass/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /withdraw/i })).not.toBeInTheDocument();
   });

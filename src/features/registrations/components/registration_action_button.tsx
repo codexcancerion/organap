@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { AlertDialog, Button, Chip, Spinner, toast } from "@heroui/react";
-import { CheckCircle2, LogOut, Ticket } from "lucide-react";
+import { AlertDialog, Button, Spinner, toast } from "@heroui/react";
+import { LogOut, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -163,19 +163,12 @@ export function RegistrationActionButton({
 
     return (
       <div className="flex items-center gap-2 flex-wrap">
-        {isAttended ? (
-          <Chip color="accent" size="md" variant="soft">
-            <CheckCircle2 className="mr-1 inline" size={14} />
-            Checked In
-          </Chip>
-        ) : null}
-
         <Button
-          size="md"
+          size="sm"
           variant="primary"
           onPress={() => setIsPassModalOpen(true)}
         >
-          <Ticket size={16} />
+          <Ticket size={15} />
           View Digital Pass
         </Button>
 
@@ -183,11 +176,11 @@ export function RegistrationActionButton({
           <Button
             className="text-danger hover:bg-danger/10"
             isDisabled={isPending}
-            size="md"
+            size="sm"
             variant="ghost"
             onPress={() => setIsWithdrawConfirmOpen(true)}
           >
-            <LogOut size={16} />
+            <LogOut size={15} />
             Withdraw
           </Button>
         ) : null}
@@ -254,7 +247,7 @@ export function RegistrationActionButton({
 
   if (deadlinePassed) {
     return (
-      <Button isDisabled size="md" variant="secondary">
+      <Button isDisabled size="sm" variant="secondary">
         Registration Closed
       </Button>
     );
@@ -262,7 +255,7 @@ export function RegistrationActionButton({
 
   if (isFull) {
     return (
-      <Button isDisabled size="md" variant="secondary">
+      <Button isDisabled size="sm" variant="secondary">
         Capacity Reached (Full)
       </Button>
     );
@@ -272,11 +265,11 @@ export function RegistrationActionButton({
     <Button
       isDisabled={isPending}
       isPending={isPending}
-      size="md"
+      size="sm"
       variant="primary"
       onPress={handleRegister}
     >
-      {isPending ? <Spinner color="current" size="sm" /> : <Ticket size={16} />}
+      {isPending ? <Spinner color="current" size="sm" /> : <Ticket size={15} />}
       {isPending ? "Confirming..." : "Register for Event"}
     </Button>
   );

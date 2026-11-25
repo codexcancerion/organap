@@ -61,43 +61,46 @@ export function EventDetailCard({
         actions={
           (!isCancelled && (actionSlot || isStaffOrSA || canManageAttendance)) ||
           canViewReviewRecord ? (
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {canViewReviewRecord ? (
-                <NextLink href={`/events/${event.id}?view=review`}>
-                  <Button size="md" variant="secondary">
-                    <FileText size={16} />
-                    Proposal &amp; Approval Record
-                  </Button>
-                </NextLink>
-              ) : null}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 w-full">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Slot for Registration action button from registrations feature */}
+                {!isCancelled ? actionSlot : null}
 
-              {!isCancelled && canManageAttendance ? (
-                <NextLink href={`/attendance/${event.id}`}>
-                  <Button size="md" variant="secondary">
-                    <UserCheck size={16} />
-                    Attendance Desk
-                  </Button>
-                </NextLink>
-              ) : null}
+                {!isCancelled && canManageAttendance ? (
+                  <NextLink href={`/attendance/${event.id}`}>
+                    <Button size="sm" variant="secondary">
+                      <UserCheck size={15} />
+                      Attendance Desk
+                    </Button>
+                  </NextLink>
+                ) : null}
 
-              {/* Slot for Registration action button from registrations feature */}
-              {!isCancelled ? actionSlot : null}
+                {canViewReviewRecord ? (
+                  <NextLink href={`/events/${event.id}?view=review`}>
+                    <Button size="sm" variant="secondary">
+                      <FileText size={15} />
+                      Proposal &amp; Approval Record
+                    </Button>
+                  </NextLink>
+                ) : null}
+              </div>
 
               {/* Student Affairs cancellation action (FR-15) */}
               {!isCancelled && isStaffOrSA ? (
                 <Button
                   className="text-danger hover:bg-danger/10"
-                  size="md"
+                  size="sm"
                   variant="ghost"
                   onPress={() => setIsCancelModalOpen(true)}
                 >
-                  <Ban size={16} />
+                  <Ban size={15} />
                   Cancel Event
                 </Button>
               ) : null}
             </div>
           ) : undefined
         }
+        actionsLayout="stacked"
         badge={
           isCancelled ? (
             <Chip color="danger" size="sm" variant="soft">
