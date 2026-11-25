@@ -1,5 +1,6 @@
 "use client";
 
+import type { CatalogFilterField } from "@/components/ui/catalog_filter_dropdown";
 import type { AttendanceEventItem } from "../types";
 
 import React from "react";
@@ -12,7 +13,6 @@ import {
   EmptyState,
   ProgressBar,
   SearchField,
-  Tabs,
 } from "@heroui/react";
 import {
   Calendar,
@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { formatDate, formatTime } from "@/utils/formatters";
 
 export type AttendanceEventPickerProps = {
@@ -34,20 +35,63 @@ type WindowTab = "all" | "live" | "upcoming" | "closed";
 export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
   const [query, setQuery] = React.useState("");
   const [tab, setTab] = React.useState<WindowTab>("all");
+  const [orgFilter, setOrgFilter] = React.useState("all");
 
-  const { liveCount, upcomingCount, closedCount } = React.useMemo(() => {
+  const { liveCount, upcomingCount, closedCount, uniqueOrgs } = React.useMemo(() => {
     let live = 0;
     let upcoming = 0;
     let closed = 0;
+    const orgMap = new Map<string, string>();
 
     for (const evt of events) {
       if (evt.isWindowOpen) live += 1;
       else if (evt.isWindowClosed) closed += 1;
       else upcoming += 1;
+
+      orgMap.set(evt.organizationAcronym, evt.organizationName);
     }
 
-    return { liveCount: live, upcomingCount: upcoming, closedCount: closed };
+    return {
+      liveCount: live,
+      upcomingCount: upcoming,
+      closedCount: closed,
+      uniqueOrgs: Array.from(orgMap.entries()).map(([acronym, name]) => ({
+        id: acronym,
+        label: `${acronym} - ${name}`,
+      })),
+    };
   }, [events]);
+
+  const filterFields = React.useMemo<CatalogFilterField[]>(() => {
+    const fields: CatalogFilterField[] = [
+      {
+        id: "window",
+        label: "Check-In Window",
+        ariaLabel: "Filter attendance events by window status",
+        value: tab,
+        onChange: (val) => setTab(val as WindowTab),
+        options: [
+          { id: "all", label: `All Windows (${events.length})` },
+          { id: "live", label: `Live Now (${liveCount})` },
+          { id: "upcoming", label: `Upcoming (${upcomingCount})` },
+          { id: "closed", label: `Closed (${closedCount})` },
+        ],
+      },
+    ];
+
+    if (uniqueOrgs.length > 1) {
+      fields.push({
+        id: "organization",
+        label: "Organization",
+        ariaLabel: "Filter attendance events by organization",
+        value: orgFilter,
+        onChange: setOrgFilter,
+        options: [{ id: "all", label: "All Organizations" }, ...uniqueOrgs],
+      });
+    }
+
+    return fields;
+  }, [closedCount, events.length, liveCount, orgFilter, tab, uniqueOrgs, upcomingCount]);
 
   const filteredEvents = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -61,6 +105,7 @@ export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
         e.venueName.toLowerCase().includes(q);
 
       if (!matchesQuery) return false;
+      if (orgFilter !== "all" && e.organizationAcronym !== orgFilter) return false;
 
       if (tab === "live") return e.isWindowOpen;
       if (tab === "upcoming") return !e.isWindowOpen && !e.isWindowClosed;
@@ -68,14 +113,14 @@ export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
 
       return true;
     });
-  }, [events, query, tab]);
+  }, [events, query, tab, orgFilter]);
 
   return (
     <div className="flex flex-col gap-6 w-full animate-fade-in">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search attendance events"
-          className="w-full lg:w-80"
+          className="w-full md:w-80"
           name="attendance-event-search"
           value={query}
           onChange={setQuery}
@@ -87,32 +132,7 @@ export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
           </SearchField.Group>
         </SearchField>
 
-        <Tabs
-          selectedKey={tab}
-          variant="secondary"
-          onSelectionChange={(key) => setTab(String(key) as WindowTab)}
-        >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Filter attendance events by window status">
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                All ({events.length})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="live">
-                Live Now ({liveCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="upcoming">
-                Upcoming ({upcomingCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="closed">
-                Closed ({closedCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        <CatalogFilterDropdown filters={filterFields} />
       </div>
 
       {filteredEvents.length === 0 ? (
@@ -123,7 +143,7 @@ export function AttendanceEventPicker({ events }: AttendanceEventPickerProps) {
               No Events Found
             </h3>
             <p className="text-xs text-muted max-w-sm">
-              {query || tab !== "all"
+              {query || tab !== "all" || orgFilter !== "all"
                 ? "No authorized events matched your search or check-in window filter."
                 : "There are currently no approved campus events within your organization scope ready for attendance verification."}
             </p>

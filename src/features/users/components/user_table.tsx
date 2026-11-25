@@ -11,20 +11,18 @@ import {
   Card,
   Chip,
   EmptyState,
-  ListBox,
   SearchField,
-  Select,
   Table,
 } from "@heroui/react";
 import {
   Building2,
   Edit2,
-  Filter,
   ShieldAlert,
   Users,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { UserEditModal } from "./user_edit_modal";
 import { UserGroupModal } from "./user_group_modal";
@@ -127,75 +125,35 @@ export function UserTable({ users, allGroups }: UserTableProps) {
           </SearchField.Group>
         </SearchField>
 
-        {/* Group & Status Selectors */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Filter size={14} />
-            <span>Filters:</span>
-          </div>
-
-          <Select
-            aria-label="Filter by group"
-            className="w-44"
-            value={selectedGroup}
-            onChange={(val) => setSelectedGroup(val != null ? String(val) : "all")}
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="all" textValue="All Groups">
-                  All Groups
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                {allGroups.map((g) => (
-                  <ListBox.Item key={g.id} id={g.id} textValue={g.name}>
-                    {g.name}
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
-
-          <Select
-            aria-label="Filter by status"
-            className="w-44"
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val != null ? String(val) : "all")}
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="all" textValue="All Statuses">
-                  All Statuses
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="active" textValue="Active Only">
-                  Active Only
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="inactive" textValue="Inactive Only">
-                  Inactive Only
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="staff" textValue="Staff Only">
-                  Staff Only
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="superuser" textValue="Superusers Only">
-                  Superusers Only
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </div>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "group",
+              label: "Role Group",
+              ariaLabel: "Filter by group",
+              value: selectedGroup,
+              onChange: setSelectedGroup,
+              options: [
+                { id: "all", label: "All Groups" },
+                ...allGroups.map((g) => ({ id: g.id, label: g.name })),
+              ],
+            },
+            {
+              id: "status",
+              label: "Account Status",
+              ariaLabel: "Filter by status",
+              value: statusFilter,
+              onChange: setStatusFilter,
+              options: [
+                { id: "all", label: "All Statuses" },
+                { id: "active", label: "Active Only" },
+                { id: "inactive", label: "Inactive Only" },
+                { id: "staff", label: "Staff Only" },
+                { id: "superuser", label: "Superusers Only" },
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Roster Table */}

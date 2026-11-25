@@ -11,7 +11,6 @@ import {
   Chip,
   EmptyState,
   SearchField,
-  Tabs,
   toast,
 } from "@heroui/react";
 import {
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { ConfirmDeleteModal } from "@/components/ui/confirm_delete_modal";
 
 import { deleteVenue } from "../services/venue_services";
@@ -124,10 +124,10 @@ export function VenueCatalog({
       />
 
       {/* Search & Status Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search venues"
-          className="w-full sm:w-80"
+          className="w-full md:w-80"
           name="venue-search"
           value={search}
           onChange={setSearch}
@@ -139,29 +139,29 @@ export function VenueCatalog({
           </SearchField.Group>
         </SearchField>
 
-        {(permissions.canViewInactive || hasMaintenanceVenues) ? (
-          <Tabs
-            selectedKey={statusFilter}
-            variant="secondary"
-            onSelectionChange={(key) => setStatusFilter(String(key))}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Filter venues by availability">
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                  All ({venues.length})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="available">
-                  Available ({venues.filter((v) => v.isActive).length})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="maintenance">
-                  Maintenance ({venues.filter((v) => !v.isActive).length})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+        {permissions.canViewInactive || hasMaintenanceVenues ? (
+          <CatalogFilterDropdown
+            filters={[
+              {
+                id: "availability",
+                label: "Availability",
+                ariaLabel: "Filter venues by availability",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: [
+                  { id: "all", label: `All Venues (${venues.length})` },
+                  {
+                    id: "available",
+                    label: `Available (${venues.filter((v) => v.isActive).length})`,
+                  },
+                  {
+                    id: "maintenance",
+                    label: `Maintenance (${venues.filter((v) => !v.isActive).length})`,
+                  },
+                ],
+              },
+            ]}
+          />
         ) : null}
       </div>
 

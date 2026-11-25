@@ -10,9 +10,7 @@ import {
   Card,
   Chip,
   EmptyState,
-  ListBox,
   SearchField,
-  Select,
 } from "@heroui/react";
 import {
   ArrowRight,
@@ -25,6 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { ORGANIZATION_CATEGORY_LABELS } from "../constants";
 
@@ -144,32 +143,21 @@ export function OrganizationCatalog({
           </SearchField.Group>
         </SearchField>
 
-        {/* Category Filter Dropdown */}
-        <Select
-          aria-label="Filter organizations by category"
-          className="w-full md:w-56"
-          value={selectedCategory}
-          onChange={(val) => setSelectedCategory(val ? String(val) : "all")}
-        >
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              {categories.map((cat) => {
-                const label = CATEGORY_FILTER_LABELS[cat] ?? cat;
-
-                return (
-                  <ListBox.Item key={cat} id={cat} textValue={label}>
-                    {label}
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                );
-              })}
-            </ListBox>
-          </Select.Popover>
-        </Select>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "category",
+              label: "Category",
+              ariaLabel: "Filter organizations by category",
+              value: selectedCategory,
+              onChange: setSelectedCategory,
+              options: categories.map((cat) => ({
+                id: cat,
+                label: CATEGORY_FILTER_LABELS[cat] ?? cat,
+              })),
+            },
+          ]}
+        />
       </div>
 
       {/* Organizations Grid */}

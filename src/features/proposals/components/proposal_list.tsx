@@ -8,24 +8,20 @@ import {
   Button,
   Card,
   Chip,
-  Input,
-  ListBox,
-  Select,
-  TextField,
+  SearchField,
 } from "@heroui/react";
 import {
   Plus,
-  Search,
   Calendar,
   MapPin,
   Users,
   Building2,
   Clock,
   ArrowRight,
-  Filter,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { ProposalStatusChip } from "./proposal_status_chip";
 
@@ -75,75 +71,41 @@ export function ProposalList({ proposals, canCreate = true }: ProposalListProps)
       />
 
       {/* Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="w-full sm:w-80">
-          <TextField
-            aria-label="Search proposals"
-            value={search}
-            onChange={(val) => setSearch(val)}
-          >
-            <div className="relative w-full">
-              <Input
-                className="pl-9"
-                placeholder="Search by event title, org, or venue…"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={15}
-              />
-            </div>
-          </TextField>
-        </div>
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search proposals"
+          className="w-full md:w-80"
+          name="proposal-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by event title, org, or venue…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Filter size={14} />
-            <span>Status:</span>
-          </div>
-          <Select
-            aria-label="Filter by proposal status"
-            className="w-48"
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(String(val))}
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="all" textValue="All Proposals">
-                  All Proposals
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="draft" textValue="Drafts Only">
-                  Drafts Only
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="pending_adviser" textValue="Pending Adviser">
-                  Pending Adviser
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="pending_student_affairs" textValue="Pending Student Affairs">
-                  Pending Student Affairs
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="returned_by_adviser" textValue="Needs Revision">
-                  Needs Revision
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="approved" textValue="Approved Events">
-                  Approved Events
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                <ListBox.Item id="rejected_by_student_affairs" textValue="Rejected">
-                  Rejected
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </div>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "status",
+              label: "Proposal Status",
+              ariaLabel: "Filter by proposal status",
+              value: statusFilter,
+              onChange: setStatusFilter,
+              options: [
+                { id: "all", label: "All Proposals" },
+                { id: "draft", label: "Drafts Only" },
+                { id: "pending_adviser", label: "Pending Adviser" },
+                { id: "pending_student_affairs", label: "Pending Student Affairs" },
+                { id: "returned_by_adviser", label: "Needs Revision" },
+                { id: "approved", label: "Approved Events" },
+                { id: "rejected_by_student_affairs", label: "Rejected" },
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Proposals Grid */}

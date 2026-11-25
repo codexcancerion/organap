@@ -9,10 +9,7 @@ import {
   Button,
   Card,
   Chip,
-  Input,
-  ListBox,
-  Select,
-  TextField,
+  SearchField,
   toast,
 } from "@heroui/react";
 import {
@@ -20,12 +17,12 @@ import {
   GraduationCap,
   Landmark,
   Plus,
-  Search,
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { ConfirmDeleteModal } from "@/components/ui/confirm_delete_modal";
 
 import { deleteProgram } from "../services/program_services";
@@ -121,52 +118,41 @@ export function ProgramCatalog({
       />
 
       {/* Search & Department Filter */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="w-full sm:w-80">
-          <TextField aria-label="Search programs" value={search} onChange={setSearch}>
-            <div className="relative w-full">
-              <Input
-                className="pl-9"
-                placeholder="Search by program name, code, or department…"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={15}
-              />
-            </div>
-          </TextField>
-        </div>
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search programs"
+          className="w-full md:w-80"
+          name="program-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by program name, code, or department…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
 
         {departments.length > 0 ? (
-          <Select
-            aria-label="Filter by department"
-            className="w-full sm:w-64"
-            value={departmentFilter}
-            onChange={(val) => setDepartmentFilter(val ? String(val) : "all")}
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="all" textValue="All Departments">
-                  All Departments
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                {departments.map((dept) => (
-                  <ListBox.Item
-                    key={dept.id}
-                    id={dept.id}
-                    textValue={`${dept.code} — ${dept.name}`}
-                  >
-                    {dept.code} — {dept.name}
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
+          <CatalogFilterDropdown
+            className="w-full md:w-64"
+            filters={[
+              {
+                id: "department",
+                label: "Department",
+                ariaLabel: "Filter by department",
+                value: departmentFilter,
+                onChange: setDepartmentFilter,
+                options: [
+                  { id: "all", label: "All Departments" },
+                  ...departments.map((dept) => ({
+                    id: dept.id,
+                    label: `${dept.code} - ${dept.name}`,
+                  })),
+                ],
+              },
+            ]}
+          />
         ) : null}
       </div>
 

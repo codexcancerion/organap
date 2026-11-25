@@ -11,10 +11,11 @@ import {
   SearchField,
   Spinner,
   Table,
-  Tabs,
   toast,
 } from "@heroui/react";
 import { CheckCircle2, Clock, UserCheck, Users } from "lucide-react";
+
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { recordCheckIn } from "../services/attendance_services";
 
@@ -94,10 +95,10 @@ export function ManualCheckinTable({
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Search & Status Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search attendee roster"
-          className="w-full sm:w-80"
+          className="w-full md:w-80"
           name="roster-search"
           value={search}
           onChange={setSearch}
@@ -109,28 +110,22 @@ export function ManualCheckinTable({
           </SearchField.Group>
         </SearchField>
 
-        <Tabs
-          selectedKey={statusTab}
-          variant="secondary"
-          onSelectionChange={(key) => setStatusTab(String(key) as RosterTab)}
-        >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Filter attendee roster">
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                All ({roster.length})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="pending">
-                Pending ({pendingCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="attended">
-                Checked In ({attendedCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "status",
+              label: "Attendance Status",
+              ariaLabel: "Filter attendee roster",
+              value: statusTab,
+              onChange: (val) => setStatusTab(val as RosterTab),
+              options: [
+                { id: "all", label: `All Registrants (${roster.length})` },
+                { id: "pending", label: `Pending (${pendingCount})` },
+                { id: "attended", label: `Checked In (${attendedCount})` },
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Roster Table */}

@@ -10,7 +10,6 @@ import {
   Chip,
   EmptyState,
   SearchField,
-  Tabs,
   toast,
 } from "@heroui/react";
 import {
@@ -20,6 +19,8 @@ import {
   Inbox,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import {
   markAllNotificationsAsRead,
@@ -91,10 +92,10 @@ export function NotificationList({ notifications }: NotificationListProps) {
 
   return (
     <div className="flex flex-col gap-5 w-full animate-fade-in">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search notifications"
-          className="w-full lg:w-80"
+          className="w-full md:w-80"
           name="notification-search"
           value={search}
           onChange={setSearch}
@@ -106,30 +107,28 @@ export function NotificationList({ notifications }: NotificationListProps) {
           </SearchField.Group>
         </SearchField>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Tabs
-            selectedKey={tab}
-            variant="secondary"
-            onSelectionChange={(key) => setTab(String(key) as NotificationTab)}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Filter notifications">
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                  All ({items.length})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="unread">
-                  Unread ({unreadCount})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <CatalogFilterDropdown
+            className="w-full sm:w-56"
+            filters={[
+              {
+                id: "status",
+                label: "Status",
+                ariaLabel: "Filter notifications",
+                value: tab,
+                onChange: (val) => setTab(val as NotificationTab),
+                options: [
+                  { id: "all", label: `All Notifications (${items.length})` },
+                  { id: "unread", label: `Unread Only (${unreadCount})` },
+                ],
+              },
+            ]}
+          />
 
           {unreadCount > 0 ? (
             <Button
               isDisabled={isPending}
-              size="sm"
+              size="md"
               variant="secondary"
               onPress={handleMarkAllRead}
             >

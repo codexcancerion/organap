@@ -70,11 +70,13 @@ describe("<AttachmentTypeCatalog />", () => {
       screen.getByRole("link", { name: /Template: budget-template\.pdf/i }),
     ).toHaveAttribute("href", "https://example.com/budget-template.pdf");
 
-    fireEvent.click(screen.getByRole("tab", { name: /Required \(1\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Requirement/i }));
+    fireEvent.click(screen.getByRole("option", { name: /Required \(1\)/i }));
     expect(screen.getByText("Budget Proposal")).toBeInTheDocument();
     expect(screen.queryByText("Event Poster")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /All \(2\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Reset/i }));
     const searchInput = screen.getByPlaceholderText(
       /Search by name, code, or guideline/i,
     );

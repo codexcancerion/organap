@@ -8,15 +8,13 @@ import {
   Button,
   Card,
   Chip,
-  Input,
-  TextField,
+  SearchField,
   toast,
 } from "@heroui/react";
 import {
   ArrowRight,
   Landmark,
   Plus,
-  Search,
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -121,19 +119,20 @@ export function DepartmentCatalog({
       />
 
       {/* Search Bar */}
-      <div className="w-full sm:w-80">
-        <TextField aria-label="Search departments" value={search} onChange={setSearch}>
-          <div className="relative w-full">
-            <Input
-              className="pl-9"
-              placeholder="Search by department name, code, or program…"
-            />
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-              size={15}
-            />
-          </div>
-        </TextField>
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search departments"
+          className="w-full md:w-80"
+          name="department-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search by department name, code, or program…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
       </div>
 
       {/* Departments Grid */}

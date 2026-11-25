@@ -1,5 +1,6 @@
 "use client";
 
+import type { CatalogFilterField } from "@/components/ui/catalog_filter_dropdown";
 import type { AttachmentPermissions, AttachmentTypeItem } from "../types";
 
 import React from "react";
@@ -10,7 +11,6 @@ import {
   Chip,
   EmptyState,
   SearchField,
-  Tabs,
   toast,
 } from "@heroui/react";
 import {
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { ConfirmDeleteModal } from "@/components/ui/confirm_delete_modal";
 
 import { deleteAttachmentType } from "../services/attachment_services";
@@ -42,23 +43,70 @@ export function AttachmentTypeCatalog({
   const router = useRouter();
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<RequirementFilter>("all");
+  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [itemToEdit, setItemToEdit] = React.useState<AttachmentTypeItem | null>(null);
   const [itemToDelete, setItemToDelete] = React.useState<AttachmentTypeItem | null>(null);
 
   const canOpenSettings = permissions.canChange || permissions.canDelete;
 
-  const { requiredCount, optionalCount } = React.useMemo(() => {
+  const { requiredCount, optionalCount, uniqueCategories } = React.useMemo(() => {
     let required = 0;
     let optional = 0;
+    const catSet = new Set<string>();
 
     for (const item of attachmentTypes) {
       if (item.isRequired) required += 1;
       else optional += 1;
+      catSet.add(item.category?.trim() || "Others");
     }
 
-    return { requiredCount: required, optionalCount: optional };
+    return {
+      requiredCount: required,
+      optionalCount: optional,
+      uniqueCategories: Array.from(catSet),
+    };
   }, [attachmentTypes]);
+
+  const filterFields = React.useMemo<CatalogFilterField[]>(() => {
+    const fields: CatalogFilterField[] = [
+      {
+        id: "requirement",
+        label: "Requirement",
+        ariaLabel: "Filter attachment types",
+        value: filter,
+        onChange: (val) => setFilter(val as RequirementFilter),
+        options: [
+          { id: "all", label: `All Types (${attachmentTypes.length})` },
+          { id: "required", label: `Required (${requiredCount})` },
+          { id: "optional", label: `Optional (${optionalCount})` },
+        ],
+      },
+    ];
+
+    if (uniqueCategories.length > 1) {
+      fields.push({
+        id: "category",
+        label: "Category",
+        ariaLabel: "Filter by attachment category",
+        value: categoryFilter,
+        onChange: setCategoryFilter,
+        options: [
+          { id: "all", label: "All Categories" },
+          ...uniqueCategories.map((cat) => ({ id: cat, label: cat })),
+        ],
+      });
+    }
+
+    return fields;
+  }, [
+    attachmentTypes.length,
+    categoryFilter,
+    filter,
+    optionalCount,
+    requiredCount,
+    uniqueCategories,
+  ]);
 
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -67,16 +115,22 @@ export function AttachmentTypeCatalog({
       if (filter === "required" && !item.isRequired) return false;
       if (filter === "optional" && item.isRequired) return false;
 
+      const resolvedCategory = item.category?.trim() || "Others";
+
+      if (categoryFilter !== "all" && resolvedCategory !== categoryFilter) {
+        return false;
+      }
+
       if (!q) return true;
 
       return (
         item.name.toLowerCase().includes(q) ||
         item.code.toLowerCase().includes(q) ||
-        (item.category ?? "Others").toLowerCase().includes(q) ||
+        resolvedCategory.toLowerCase().includes(q) ||
         (item.description ?? "").toLowerCase().includes(q)
       );
     });
-  }, [attachmentTypes, search, filter]);
+  }, [attachmentTypes, search, filter, categoryFilter]);
 
   const handleOpenCreate = () => {
     setItemToEdit(null);
@@ -133,10 +187,10 @@ export function AttachmentTypeCatalog({
       />
 
       {/* Search & Requirement Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search attachment types"
-          className="w-full sm:w-80"
+          className="w-full md:w-80"
           name="attachment-type-search"
           value={search}
           onChange={setSearch}
@@ -148,28 +202,7 @@ export function AttachmentTypeCatalog({
           </SearchField.Group>
         </SearchField>
 
-        <Tabs
-          selectedKey={filter}
-          variant="secondary"
-          onSelectionChange={(key) => setFilter(String(key) as RequirementFilter)}
-        >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Filter attachment types">
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                All ({attachmentTypes.length})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="required">
-                Required ({requiredCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab className="text-xs whitespace-nowrap" id="optional">
-                Optional ({optionalCount})
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        <CatalogFilterDropdown filters={filterFields} />
       </div>
 
       {/* Attachment Types Grid */}

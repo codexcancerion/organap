@@ -1,5 +1,6 @@
 "use client";
 
+import type { CatalogFilterField } from "@/components/ui/catalog_filter_dropdown";
 import type { ActivityType, EventListItem } from "../types";
 
 import React from "react";
@@ -10,10 +11,7 @@ import {
   Card,
   Chip,
   EmptyState,
-  ListBox,
   SearchField,
-  Select,
-  Tabs,
 } from "@heroui/react";
 import {
   ArrowRight,
@@ -25,6 +23,7 @@ import {
   Tag,
 } from "lucide-react";
 
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { ProposalStatusChip } from "@/components/ui/proposal_status_chip";
 
 import { ACTIVITY_TYPE_LABELS } from "../types";
@@ -48,6 +47,7 @@ export function EventCatalog({
   const [search, setSearch] = React.useState("");
   const [venueFilter, setVenueFilter] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState<EventStatusFilter>("all");
+  const [activityTypeFilter, setActivityTypeFilter] = React.useState("all");
 
   const uniqueVenues = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -55,6 +55,19 @@ export function EventCatalog({
     events.forEach((e) => map.set(e.venueId, e.venueName));
 
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [events]);
+
+  const uniqueActivityTypes = React.useMemo(() => {
+    const set = new Set<string>();
+
+    events.forEach((e) => {
+      if (e.activityType) set.add(e.activityType);
+    });
+
+    return Array.from(set).map((id) => ({
+      id,
+      label: ACTIVITY_TYPE_LABELS[id as ActivityType] ?? id,
+    }));
   }, [events]);
 
   const { approvedCount, pendingCount, draftsCount, hasProposals } = React.useMemo(() => {
@@ -80,6 +93,65 @@ export function EventCatalog({
     };
   }, [events]);
 
+  const filterFields = React.useMemo<CatalogFilterField[]>(() => {
+    const fields: CatalogFilterField[] = [];
+
+    if (hasProposals) {
+      fields.push({
+        id: "status",
+        label: "Status",
+        ariaLabel: "Filter events by status",
+        value: statusFilter,
+        onChange: (val) => setStatusFilter(val as EventStatusFilter),
+        options: [
+          { id: "all", label: `All Statuses (${events.length})` },
+          { id: "approved", label: `Approved (${approvedCount})` },
+          { id: "pending", label: `In Review (${pendingCount})` },
+          { id: "drafts", label: `Drafts & Returned (${draftsCount})` },
+        ],
+      });
+    }
+
+    fields.push({
+      id: "venue",
+      label: "Venue",
+      ariaLabel: "Filter by venue",
+      value: venueFilter,
+      onChange: setVenueFilter,
+      options: [
+        { id: "all", label: "All Campus Venues" },
+        ...uniqueVenues.map((v) => ({ id: v.id, label: v.name })),
+      ],
+    });
+
+    if (uniqueActivityTypes.length > 1) {
+      fields.push({
+        id: "activityType",
+        label: "Activity Type",
+        ariaLabel: "Filter by activity type",
+        value: activityTypeFilter,
+        onChange: setActivityTypeFilter,
+        options: [
+          { id: "all", label: "All Activity Types" },
+          ...uniqueActivityTypes,
+        ],
+      });
+    }
+
+    return fields;
+  }, [
+    activityTypeFilter,
+    approvedCount,
+    draftsCount,
+    events.length,
+    hasProposals,
+    pendingCount,
+    statusFilter,
+    uniqueActivityTypes,
+    uniqueVenues,
+    venueFilter,
+  ]);
+
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
 
@@ -98,6 +170,8 @@ export function EventCatalog({
         (e.semesterName ?? "").toLowerCase().includes(q);
 
       const matchVenue = venueFilter === "all" || e.venueId === venueFilter;
+      const matchActivityType =
+        activityTypeFilter === "all" || e.activityType === activityTypeFilter;
 
       let matchStatus = true;
 
@@ -110,17 +184,17 @@ export function EventCatalog({
           e.status !== "approved" && !PENDING_REVIEW_STATUSES.has(e.status);
       }
 
-      return matchSearch && matchVenue && matchStatus;
+      return matchSearch && matchVenue && matchActivityType && matchStatus;
     });
-  }, [events, search, venueFilter, statusFilter]);
+  }, [events, search, venueFilter, activityTypeFilter, statusFilter]);
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Search, Status Tabs & Venue Filter Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      {/* Search & Unified Filter Dropdown Toolbar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search events"
-          className="w-full lg:w-80"
+          className="w-full md:w-80"
           name="event-search"
           value={search}
           onChange={setSearch}
@@ -132,64 +206,7 @@ export function EventCatalog({
           </SearchField.Group>
         </SearchField>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-          {hasProposals ? (
-            <Tabs
-              selectedKey={statusFilter}
-              variant="secondary"
-              onSelectionChange={(key) =>
-                setStatusFilter(String(key) as EventStatusFilter)
-              }
-            >
-              <Tabs.ListContainer>
-                <Tabs.List aria-label="Filter events by status">
-                  <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                    All ({events.length})
-                    <Tabs.Indicator />
-                  </Tabs.Tab>
-                  <Tabs.Tab className="text-xs whitespace-nowrap" id="approved">
-                    Approved ({approvedCount})
-                    <Tabs.Indicator />
-                  </Tabs.Tab>
-                  <Tabs.Tab className="text-xs whitespace-nowrap" id="pending">
-                    In Review ({pendingCount})
-                    <Tabs.Indicator />
-                  </Tabs.Tab>
-                  <Tabs.Tab className="text-xs whitespace-nowrap" id="drafts">
-                    Drafts &amp; Returned ({draftsCount})
-                    <Tabs.Indicator />
-                  </Tabs.Tab>
-                </Tabs.List>
-              </Tabs.ListContainer>
-            </Tabs>
-          ) : null}
-
-          <Select
-            aria-label="Filter by venue"
-            className="w-full sm:w-56"
-            value={venueFilter}
-            onChange={(val) => setVenueFilter(val ? String(val) : "all")}
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox>
-                <ListBox.Item id="all" textValue="All Campus Venues">
-                  All Campus Venues
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-                {uniqueVenues.map((v) => (
-                  <ListBox.Item key={v.id} id={v.id} textValue={v.name}>
-                    {v.name}
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </div>
+        <CatalogFilterDropdown filters={filterFields} />
       </div>
 
       {/* Events & Proposals Grid */}

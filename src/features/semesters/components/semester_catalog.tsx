@@ -7,8 +7,7 @@ import {
   Button,
   Card,
   Chip,
-  Input,
-  TextField,
+  SearchField,
   toast,
 } from "@heroui/react";
 import {
@@ -16,12 +15,12 @@ import {
   CalendarRange,
   Clock,
   Plus,
-  Search,
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 import { ConfirmDeleteModal } from "@/components/ui/confirm_delete_modal";
 import { formatCalendarDate } from "@/utils/formatters";
 
@@ -40,9 +39,9 @@ const STATUS_META: Record<
 
 const FILTER_OPTIONS: { key: "all" | SemesterStatus; label: string }[] = [
   { key: "all", label: "All Terms" },
-  { key: "active", label: "Active" },
-  { key: "upcoming", label: "Upcoming" },
-  { key: "completed", label: "Completed" },
+  { key: "active", label: "Active Terms" },
+  { key: "upcoming", label: "Upcoming Terms" },
+  { key: "completed", label: "Completed Terms" },
 ];
 
 function formatTermDuration(startDate: string, endDate: string): string {
@@ -140,35 +139,36 @@ export function SemesterCatalog({ semesters, permissions }: SemesterCatalogProps
       />
 
       {/* Search & Status Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="w-full sm:w-80">
-          <TextField aria-label="Search semesters" value={search} onChange={setSearch}>
-            <div className="relative w-full">
-              <Input
-                className="pl-9"
-                placeholder="Search semesters by name or description…"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={15}
-              />
-            </div>
-          </TextField>
-        </div>
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <SearchField
+          aria-label="Search semesters"
+          className="w-full md:w-80"
+          name="semester-search"
+          value={search}
+          onChange={setSearch}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Search semesters by name or description…" />
+            <SearchField.ClearButton />
+          </SearchField.Group>
+        </SearchField>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {FILTER_OPTIONS.map((option) => (
-            <Button
-              key={option.key}
-              className="shrink-0 text-xs"
-              size="sm"
-              variant={statusFilter === option.key ? "primary" : "ghost"}
-              onPress={() => setStatusFilter(option.key)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "status",
+              label: "Term Status",
+              ariaLabel: "Filter semesters by status",
+              value: statusFilter,
+              onChange: (val) => setStatusFilter(val as "all" | SemesterStatus),
+              options: FILTER_OPTIONS.map((opt) => ({
+                id: opt.key,
+                label: opt.label,
+              })),
+            },
+          ]}
+        />
       </div>
 
       {/* Semesters Grid */}

@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { deleteGroup } from "@/features/groups/services/group_services";
 import { isSystemGroupRecord } from "@/features/groups/types";
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { GroupModal } from "./group_modal";
 import { GroupPermissionMatrix } from "./group_permission_matrix";
@@ -43,6 +44,7 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
   const router = useRouter();
 
   const [search, setSearch] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState<"all" | "system" | "custom">("all");
   const [modalOpen, setModalOpen] = React.useState(false);
   const [groupToEdit, setGroupToEdit] = React.useState<AdminGroupListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminGroupListItem | null>(null);
@@ -55,14 +57,20 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
   const filteredGroups = React.useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    if (!q) return groups;
+    return groups.filter((g) => {
+      const isSys = isSystemGroupRecord(g);
 
-    return groups.filter(
-      (g) =>
+      if (typeFilter === "system" && !isSys) return false;
+      if (typeFilter === "custom" && isSys) return false;
+
+      if (!q) return true;
+
+      return (
         g.name.toLowerCase().includes(q) ||
-        (g.description && g.description.toLowerCase().includes(q)),
-    );
-  }, [groups, search]);
+        Boolean(g.description && g.description.toLowerCase().includes(q))
+      );
+    });
+  }, [groups, search, typeFilter]);
 
   const handleOpenCreate = () => {
     setGroupToEdit(null);
@@ -138,10 +146,10 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
       />
 
       {/* Filter / Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <SearchField
           aria-label="Search groups"
-          className="w-full sm:w-80"
+          className="w-full md:w-80"
           name="group-search"
           value={search}
           onChange={setSearch}
@@ -153,9 +161,22 @@ export function GroupList({ groups, allPermissions }: GroupListProps) {
           </SearchField.Group>
         </SearchField>
 
-        <span className="text-xs text-muted">
-          Showing {filteredGroups.length} of {groups.length} groups
-        </span>
+        <CatalogFilterDropdown
+          filters={[
+            {
+              id: "type",
+              label: "Group Type",
+              ariaLabel: "Filter groups by type",
+              value: typeFilter,
+              onChange: (val) => setTypeFilter(val as "all" | "system" | "custom"),
+              options: [
+                { id: "all", label: `All Groups (${groups.length})` },
+                { id: "system", label: "System Groups" },
+                { id: "custom", label: "Custom Groups" },
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Group Cards Grid */}

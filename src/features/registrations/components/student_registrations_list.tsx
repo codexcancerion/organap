@@ -13,7 +13,6 @@ import {
   EmptyState,
   SearchField,
   Spinner,
-  Tabs,
   toast,
 } from "@heroui/react";
 import {
@@ -29,6 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/layout/page_header";
+import { CatalogFilterDropdown } from "@/components/ui/catalog_filter_dropdown";
 
 import { withdrawFromEvent } from "../services/registration_services";
 
@@ -167,10 +167,10 @@ export function StudentRegistrationsList({
       />
 
       {visiblePasses.length > 0 ? (
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <SearchField
             aria-label="Search passes"
-            className="w-full lg:w-80"
+            className="w-full md:w-80"
             name="pass-search"
             value={search}
             onChange={setSearch}
@@ -182,32 +182,23 @@ export function StudentRegistrationsList({
             </SearchField.Group>
           </SearchField>
 
-          <Tabs
-            selectedKey={tab}
-            variant="secondary"
-            onSelectionChange={(key) => setTab(String(key) as PassFilterTab)}
-          >
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Filter event passes">
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="all">
-                  All ({visiblePasses.length})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="upcoming">
-                  Upcoming ({upcomingCount})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="attended">
-                  Attended ({attendedCount})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab className="text-xs whitespace-nowrap" id="past">
-                  Past &amp; Cancelled ({pastCount})
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
-          </Tabs>
+          <CatalogFilterDropdown
+            filters={[
+              {
+                id: "status",
+                label: "Pass Status",
+                ariaLabel: "Filter event passes",
+                value: tab,
+                onChange: (val) => setTab(val as PassFilterTab),
+                options: [
+                  { id: "all", label: `All Passes (${visiblePasses.length})` },
+                  { id: "upcoming", label: `Upcoming (${upcomingCount})` },
+                  { id: "attended", label: `Attended (${attendedCount})` },
+                  { id: "past", label: `Past & Cancelled (${pastCount})` },
+                ],
+              },
+            ]}
+          />
         </div>
       ) : null}
 

@@ -77,7 +77,10 @@ describe("<VenueCatalog />", () => {
     expect(screen.getByText("Audio-Visual Room 1")).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: "" } });
-    fireEvent.click(screen.getByRole("tab", { name: /Available \(1\)/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Filter venues by availability/i }),
+    );
+    fireEvent.click(screen.getByRole("option", { name: /Available \(1\)/i }));
     expect(screen.getByText("University Main Auditorium")).toBeInTheDocument();
     expect(screen.queryByText("Audio-Visual Room 1")).not.toBeInTheDocument();
   });

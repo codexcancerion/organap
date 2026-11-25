@@ -113,15 +113,17 @@ describe("<EventCatalog />", () => {
     expect(screen.getByText("By Maria Santos")).toBeInTheDocument();
   });
 
-  it("filters merged catalog by status tabs and search query", () => {
+  it("filters merged catalog via unified Filters dropdown and search query", () => {
     render(<EventCatalog events={mockEvents} />);
 
-    fireEvent.click(screen.getByRole("tab", { name: /In Review \(1\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Status/i }));
+    fireEvent.click(screen.getByRole("option", { name: /In Review \(1\)/i }));
     expect(screen.getByText("Robotics Showcase Proposal")).toBeInTheDocument();
     expect(screen.queryByText("Hackathon 2026")).not.toBeInTheDocument();
     expect(screen.queryByText("Draft Cultural Night")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /All \(4\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Reset/i }));
     const searchInput = screen.getByPlaceholderText(
       /Search by title, organization, or venue/i,
     );
@@ -131,11 +133,14 @@ describe("<EventCatalog />", () => {
     expect(screen.queryByText("Robotics Showcase Proposal")).not.toBeInTheDocument();
   });
 
-  it("hides status filter tabs when only approved events are present", () => {
+  it("renders a single venue Select dropdown without status filter when only approved events are present", () => {
     render(<EventCatalog events={mockEvents.slice(0, 2)} />);
 
     expect(
-      screen.queryByRole("tab", { name: /In Review/i }),
+      screen.getByRole("button", { name: /All Campus Venues.*Filter by venue/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Filters/i }),
     ).not.toBeInTheDocument();
   });
 
