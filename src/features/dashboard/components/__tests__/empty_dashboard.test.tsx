@@ -107,5 +107,46 @@ describe("<EmptyDashboard />", () => {
     expect(screen.getByText("Org Registrations")).toBeInTheDocument();
     expect(screen.getByText("Draft New Proposal")).toBeInTheDocument();
     expect(screen.getByText("Byte & Bond General Assembly")).toBeInTheDocument();
+    expect(screen.getByText("50% turnout")).toBeInTheDocument();
+  });
+
+  it("renders superuser KPI cards, institutional snapshot strip, and streamlined header actions", () => {
+    const adminUser: AuthUser = {
+      id: "admin-1",
+      email: "admin@organap.edu",
+      displayName: "Melbert Marafo",
+      schoolId: "2023-01-0162",
+      avatarUrl: null,
+      isSuperuser: true,
+      isStaff: true,
+      isActive: true,
+      groups: [],
+      permissions: ["proposals.approve", "proposals.create", "attendance.verify"],
+    };
+
+    const metrics: DashboardMetrics = {
+      pendingApprovals: 2,
+      awaitingEndorsement: 3,
+      myDraftProposals: 0,
+      myRegistrations: 0,
+      myAttended: 0,
+      activeEvents: 4,
+      recognizedOrgs: 10,
+      campusVenues: 5,
+      totalRegistrations: 100,
+      totalAttended: 75,
+    };
+
+    render(<EmptyDashboard metrics={metrics} user={adminUser} />);
+
+    expect(screen.getByText("Hello, Melbert Marafo!")).toBeInTheDocument();
+    expect(screen.getByText("SUPERUSER")).toBeInTheDocument();
+    expect(screen.getByText("Action needed")).toBeInTheDocument();
+    expect(screen.getByText("75% turnout")).toBeInTheDocument();
+    expect(screen.getByText("Recognized Organizations")).toBeInTheDocument();
+    expect(screen.getByText("Campus Venues")).toBeInTheDocument();
+    expect(screen.getByText("Awaiting Adviser Endorsement")).toBeInTheDocument();
+    expect(screen.getByText("Review Proposals")).toBeInTheDocument();
+    expect(screen.getByText("Attendance Desk")).toBeInTheDocument();
   });
 });
