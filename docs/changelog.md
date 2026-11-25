@@ -9,6 +9,23 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-11-25
+
+### Added
+
+- **departments**: map organizations to departments and surface event and participation KPIs
+- **dashboard**: refine KPI cards, headers, empty states, and institutional snapshot
+- **ui**: standardize catalog search bars and unified filter dropdowns
+- **groups**: singularize system group names and lock initial groups from deletion
+
+### Fixed
+
+- **ui**: stack detail header actions, add mobile nav drawer, and keep action bars button-only
+
+### Chore
+
+- **db**: seed coordinated campus events, passes, and attendance data
+
 ## [0.1.1] - 2026-11-24
 
 ### Added
